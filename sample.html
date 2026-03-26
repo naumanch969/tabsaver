@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tab Saver — Extension UI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #17160f;
+    --bg2: #1f1e16;
+    --bg3: #27261d;
+    --bg4: #302f25;
+    --line: rgba(255,255,255,0.06);
+    --line2: rgba(255,255,255,0.1);
+    --t1: #f0ede4;
+    --t2: #a09d90;
+    --t3: #615f55;
+    --accent: #e8a84b;
+    --accent-dim: rgba(232,168,75,0.12);
+    --accent-glow: rgba(232,168,75,0.25);
+    --green: #5cba8a;
+    --green-dim: rgba(92,186,138,0.12);
+    --red: #e07070;
+    --red-dim: rgba(224,112,112,0.12);
+    --blue: #7bafd4;
+    --blue-dim: rgba(123,175,212,0.1);
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    background: #0f0e09;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .scene {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .device-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #3a3930;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  /* === THE POPUP === */
+  .popup {
+    width: 380px;
+    background: var(--bg);
+    border-radius: 16px;
+    border: 1px solid var(--line2);
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+    position: relative;
+  }
+
+  /* Top bar */
+  .topbar {
+    padding: 16px 18px 14px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  .logo-icon {
+    width: 26px;
+    height: 26px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,168,75,0.2);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-icon svg { width: 13px; height: 13px; }
+
+  .logo-name {
+    font-family: 'Fraunces', serif;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--t1);
+    letter-spacing: -0.01em;
+  }
+
+  .tab-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--line2);
+    border-radius: 20px;
+    padding: 4px 10px 4px 8px;
+  }
+
+  .tab-dots {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+  }
+
+  .tab-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--t3);
+  }
+  .tab-dot.on { background: var(--accent); }
+
+  .tab-count {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--t2);
+  }
+
+  /* === MORNING RESUME BANNER === */
+  .resume-banner {
+    margin: 14px 14px 0;
+    background: linear-gradient(135deg, rgba(232,168,75,0.08) 0%, rgba(232,168,75,0.04) 100%);
+    border: 1px solid rgba(232,168,75,0.2);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeSlideDown 0.4s ease;
+  }
+
+  .resume-icon {
+    width: 32px;
+    height: 32px;
+    background: rgba(232,168,75,0.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 15px;
+  }
+
+  .resume-text { flex: 1; }
+  .resume-title { font-size: 12px; font-weight: 500; color: var(--accent); line-height: 1.3; }
+  .resume-sub { font-size: 11px; color: var(--t3); margin-top: 2px; }
+
+  .resume-btn {
+    background: var(--accent);
+    color: #1a1508;
+    border: none;
+    border-radius: 7px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: opacity 0.15s;
+  }
+  .resume-btn:hover { opacity: 0.88; }
+
+  /* === SAVE CTA === */
+  .save-cta {
+    margin: 14px 14px 0;
+  }
+
+  .save-btn {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px dashed rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    padding: 11px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.18s;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .save-btn:hover {
+    background: var(--bg4);
+    border-color: rgba(232,168,75,0.3);
+  }
+
+  .save-btn-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(232,168,75,0.2);
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.18s;
+  }
+  .save-btn:hover .save-btn-icon { background: rgba(232,168,75,0.2); }
+
+  .save-btn-text { flex: 1; text-align: left; }
+  .save-btn-main { font-size: 13px; font-weight: 500; color: var(--t1); }
+  .save-btn-sub { font-size: 11px; color: var(--t3); margin-top: 1px; }
+  .save-btn-arrow { font-size: 16px; color: var(--t3); transition: transform 0.18s, color 0.18s; }
+  .save-btn:hover .save-btn-arrow { transform: translateX(2px); color: var(--accent); }
+
+  /* === SECTION HEADER === */
+  .section-header {
+    padding: 18px 18px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .section-title {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+    color: var(--t3);
+  }
+
+  .section-action {
+    font-size: 11px;
+    color: var(--t3);
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+  .section-action:hover { color: var(--accent); }
+
+  /* === WORKSPACE LIST === */
+  .workspace-list {
+    padding: 0 14px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .ws-card {
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: all 0.18s;
+    animation: fadeSlideUp 0.35s ease both;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .ws-card:nth-child(1) { animation-delay: 0.05s; }
+  .ws-card:nth-child(2) { animation-delay: 0.1s; }
+  .ws-card:nth-child(3) { animation-delay: 0.15s; }
+  .ws-card:nth-child(4) { animation-delay: 0.2s; }
+
+  .ws-card:hover {
+    background: var(--bg3);
+    border-color: var(--line2);
+    transform: translateY(-1px);
+  }
+
+  .ws-card.stale { opacity: 0.6; }
+  .ws-card.stale:hover { opacity: 1; }
+
+  .ws-stripe {
+    width: 3px;
+    height: 36px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  .ws-info { flex: 1; min-width: 0; }
+
+  .ws-name {
+    font-family: 'Fraunces', serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--t1);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.01em;
+  }
+
+  .ws-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 3px;
+  }
+
+  .ws-tab-count {
+    font-size: 11px;
+    color: var(--t3);
+  }
+
+  .ws-dot-sep { width: 2px; height: 2px; border-radius: 50%; background: var(--t3); opacity: 0.5; }
+
+  .ws-time { font-size: 11px; color: var(--t3); }
+
+  .ws-stale-tag {
+    font-size: 10px;
+    font-weight: 500;
+    color: #c4814a;
+    background: rgba(196,129,74,0.12);
+    border: 1px solid rgba(196,129,74,0.2);
+    padding: 1px 7px;
+    border-radius: 10px;
+  }
+
+  .ws-note {
+    font-size: 11px;
+    color: var(--t3);
+    margin-top: 4px;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ws-actions {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    opacity: 0;
+    transition: opacity 0.15s;
+    flex-shrink: 0;
+  }
+  .ws-card:hover .ws-actions { opacity: 1; }
+
+  .ws-open-btn {
+    background: var(--accent);
+    color: #1a1508;
+    border: none;
+    border-radius: 7px;
+    padding: 5px 11px;
+    font-size: 11px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    white-space: nowrap;
+  }
+  .ws-open-btn:hover { opacity: 0.85; }
+
+  .ws-more-btn {
+    width: 26px;
+    height: 26px;
+    background: var(--bg4);
+    border: 1px solid var(--line2);
+    border-radius: 7px;
+    color: var(--t2);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .ws-more-btn:hover { background: var(--bg3); }
+
+  /* === ARCHIVE ROW === */
+  .archive-row {
+    margin: 4px 14px 14px;
+    padding: 9px 14px;
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background 0.15s;
+    animation: fadeSlideUp 0.35s 0.25s ease both;
+  }
+  .archive-row:hover { background: var(--bg3); }
+
+  .archive-icon { font-size: 12px; }
+  .archive-text { font-size: 11px; color: var(--t3); flex: 1; }
+  .archive-arrow { font-size: 11px; color: var(--t3); }
+
+  /* === BOTTOM STATUS BAR === */
+  .statusbar {
+    border-top: 1px solid var(--line);
+    padding: 10px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .status-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse-dot 2.5s ease-in-out infinite;
+  }
+
+  .status-label { font-size: 10px; color: var(--t3); }
+  .status-time { font-size: 10px; color: var(--t3); }
+
+  /* === SAVE FLOW POPUP === */
+  .save-popup {
+    width: 380px;
+    background: var(--bg);
+    border-radius: 16px;
+    border: 1px solid var(--line2);
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .save-header {
+    padding: 20px 18px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .save-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 400;
+    color: var(--t1);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .save-sub {
+    font-size: 12px;
+    color: var(--t3);
+    margin-top: 4px;
+  }
+
+  .close-btn {
+    width: 26px;
+    height: 26px;
+    background: var(--bg3);
+    border: 1px solid var(--line2);
+    border-radius: 7px;
+    color: var(--t3);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .tab-preview {
+    margin: 16px 18px;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .favicon-stack {
+    display: flex;
+    align-items: center;
+  }
+
+  .favicon {
+    width: 20px;
+    height: 20px;
+    border-radius: 5px;
+    border: 1.5px solid var(--bg);
+    background: var(--bg4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    margin-left: -6px;
+    flex-shrink: 0;
+  }
+  .favicon:first-child { margin-left: 0; }
+
+  .favicon-more {
+    font-size: 10px;
+    color: var(--t3);
+    margin-left: 8px;
+  }
+
+  .save-form {
+    padding: 0 18px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .field-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: 6px;
+  }
+
+  .field-group { display: flex; flex-direction: column; }
+
+  .text-input {
+    background: var(--bg2);
+    border: 1px solid var(--line2);
+    border-radius: var(--radius-sm);
+    padding: 10px 13px;
+    font-size: 14px;
+    font-family: 'Fraunces', serif;
+    font-weight: 400;
+    color: var(--t1);
+    outline: none;
+    transition: border-color 0.15s;
+    letter-spacing: -0.01em;
+  }
+  .text-input::placeholder { color: var(--t3); font-style: italic; }
+  .text-input:focus { border-color: rgba(232,168,75,0.4); }
+
+  .note-input {
+    background: var(--bg2);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 10px 13px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--t2);
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+    height: 60px;
+  }
+  .note-input::placeholder { color: var(--t3); }
+  .note-input:focus { border-color: var(--line2); }
+
+  .color-picker {
+    display: flex;
+    gap: 7px;
+    margin-top: 2px;
+  }
+
+  .color-swatch {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.15s;
+    border: 2px solid transparent;
+    position: relative;
+  }
+  .color-swatch:hover { transform: scale(1.2); }
+  .color-swatch.selected {
+    border-color: rgba(255,255,255,0.4);
+    transform: scale(1.15);
+  }
+
+  .save-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 4px;
+  }
+
+  .btn-save-close {
+    flex: 1;
+    background: var(--accent);
+    color: #1a1508;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 11px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-save-close:hover { opacity: 0.88; }
+
+  .btn-save-only {
+    flex: 0 0 auto;
+    background: var(--bg3);
+    border: 1px solid var(--line2);
+    border-radius: var(--radius-sm);
+    padding: 11px 16px;
+    font-size: 12px;
+    font-weight: 400;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--t2);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-save-only:hover { background: var(--bg4); }
+
+  /* === WORKSPACE PEEK === */
+  .peek-popup {
+    width: 380px;
+    background: var(--bg);
+    border-radius: 16px;
+    border: 1px solid var(--line2);
+    overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .peek-header {
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .peek-back {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--t3);
+    margin-bottom: 10px;
+    cursor: pointer;
+    width: fit-content;
+    transition: color 0.15s;
+  }
+  .peek-back:hover { color: var(--t2); }
+
+  .peek-title-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .peek-stripe {
+    width: 4px;
+    height: 42px;
+    border-radius: 2px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  .peek-name {
+    font-family: 'Fraunces', serif;
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--t1);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    flex: 1;
+  }
+
+  .peek-saved-note {
+    font-size: 12px;
+    color: var(--t3);
+    font-style: italic;
+    margin-top: 4px;
+  }
+
+  .peek-stats {
+    display: flex;
+    gap: 16px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .peek-stat { }
+  .peek-stat-val { font-size: 20px; font-weight: 500; color: var(--t1); font-family: 'Fraunces', serif; }
+  .peek-stat-key { font-size: 10px; color: var(--t3); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  .peek-tabs {
+    padding: 12px 14px;
+    max-height: 220px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .peek-tab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .peek-tab:hover { background: var(--bg3); }
+
+  .peek-fav {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    background: var(--bg4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+  }
+
+  .peek-tab-title { font-size: 12px; color: var(--t2); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .peek-tab-domain { font-size: 10px; color: var(--t3); flex-shrink: 0; }
+
+  .peek-actions {
+    padding: 12px 14px 14px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 7px;
+  }
+
+  .btn-open-all {
+    flex: 1;
+    background: var(--accent);
+    color: #1a1508;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 11px;
+    font-size: 13px;
+    font-weight: 500;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+  }
+
+  .btn-secondary {
+    background: var(--bg3);
+    border: 1px solid var(--line2);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--t2);
+    cursor: pointer;
+  }
+
+  /* === ANIMATIONS === */
+  @keyframes fadeSlideUp {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeSlideDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* === SCROLLBAR === */
+  .peek-tabs::-webkit-scrollbar { width: 3px; }
+  .peek-tabs::-webkit-scrollbar-track { background: transparent; }
+  .peek-tabs::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 2px; }
+
+  /* Page labels */
+  .screen-wrap { display: flex; flex-direction: column; align-items: center; }
+</style>
+</head>
+<body>
+
+<div class="scene">
+
+  <!-- SCREEN 1: Main list view -->
+  <div class="screen-wrap">
+    <div class="device-label">Main view</div>
+    <div class="popup">
+      <div class="topbar">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="1" y="3" width="14" height="2.5" rx="1.25" fill="#e8a84b"/>
+              <rect x="1" y="7" width="9" height="2" rx="1" fill="#e8a84b" opacity="0.6"/>
+              <rect x="1" y="11" width="11" height="2" rx="1" fill="#e8a84b" opacity="0.35"/>
+            </svg>
+          </div>
+          <span class="logo-name">Tab Saver</span>
+        </div>
+        <div class="tab-pill">
+          <div class="tab-dots">
+            <div class="tab-dot on"></div>
+            <div class="tab-dot on"></div>
+            <div class="tab-dot on"></div>
+            <div class="tab-dot on"></div>
+            <div class="tab-dot on"></div>
+            <div class="tab-dot"></div>
+            <div class="tab-dot"></div>
+          </div>
+          <span class="tab-count">11 tabs</span>
+        </div>
+      </div>
+
+      <!-- Morning banner -->
+      <div class="resume-banner">
+        <div class="resume-icon">☀️</div>
+        <div class="resume-text">
+          <div class="resume-title">Resume yesterday's session?</div>
+          <div class="resume-sub">Client X research · 8 tabs from 6:42 PM</div>
+        </div>
+        <button class="resume-btn">Resume</button>
+      </div>
+
+      <!-- Save CTA -->
+      <div class="save-cta">
+        <button class="save-btn">
+          <div class="save-btn-icon">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+              <path d="M8 3v10M3 8h10" stroke="#e8a84b" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="save-btn-text">
+            <div class="save-btn-main">Save current tabs as workspace</div>
+            <div class="save-btn-sub">11 tabs · name it, note it, close with confidence</div>
+          </div>
+          <span class="save-btn-arrow">›</span>
+        </button>
+      </div>
+
+      <!-- Workspaces -->
+      <div class="section-header">
+        <span class="section-title">Workspaces</span>
+        <span class="section-action">Sort ↕</span>
+      </div>
+
+      <div class="workspace-list">
+        <div class="ws-card">
+          <div class="ws-stripe" style="background:#5cba8a"></div>
+          <div class="ws-info">
+            <div class="ws-name">Client X research</div>
+            <div class="ws-meta">
+              <span class="ws-tab-count">8 tabs</span>
+              <div class="ws-dot-sep"></div>
+              <span class="ws-time">2 hours ago</span>
+            </div>
+            <div class="ws-note">"Competitive analysis before Thursday call"</div>
+          </div>
+          <div class="ws-actions">
+            <button class="ws-open-btn">Open</button>
+            <button class="ws-more-btn">···</button>
+          </div>
+        </div>
+
+        <div class="ws-card">
+          <div class="ws-stripe" style="background:#7bafd4"></div>
+          <div class="ws-info">
+            <div class="ws-name">Job hunting</div>
+            <div class="ws-meta">
+              <span class="ws-tab-count">14 tabs</span>
+              <div class="ws-dot-sep"></div>
+              <span class="ws-time">yesterday</span>
+            </div>
+          </div>
+          <div class="ws-actions">
+            <button class="ws-open-btn">Open</button>
+            <button class="ws-more-btn">···</button>
+          </div>
+        </div>
+
+        <div class="ws-card">
+          <div class="ws-stripe" style="background:#c47be0"></div>
+          <div class="ws-info">
+            <div class="ws-name">SaaS pricing research</div>
+            <div class="ws-meta">
+              <span class="ws-tab-count">6 tabs</span>
+              <div class="ws-dot-sep"></div>
+              <span class="ws-time">3 days ago</span>
+            </div>
+            <div class="ws-note">"For the Q3 pricing deck"</div>
+          </div>
+          <div class="ws-actions">
+            <button class="ws-open-btn">Open</button>
+            <button class="ws-more-btn">···</button>
+          </div>
+        </div>
+
+        <div class="ws-card stale">
+          <div class="ws-stripe" style="background:#c4814a"></div>
+          <div class="ws-info">
+            <div class="ws-name">Weekend reads</div>
+            <div class="ws-meta">
+              <span class="ws-tab-count">6 tabs</span>
+              <div class="ws-dot-sep"></div>
+              <span class="ws-time">18 days ago</span>
+              <span class="ws-stale-tag">stale?</span>
+            </div>
+          </div>
+          <div class="ws-actions">
+            <button class="ws-open-btn">Open</button>
+            <button class="ws-more-btn">···</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Archive -->
+      <div class="archive-row">
+        <span class="archive-icon">🗄</span>
+        <span class="archive-text">3 archived workspaces</span>
+        <span class="archive-arrow">›</span>
+      </div>
+
+      <!-- Status bar -->
+      <div class="statusbar">
+        <div class="status-item">
+          <div class="status-dot"></div>
+          <span class="status-label">Auto-saved 3 min ago</span>
+        </div>
+        <span class="status-time">4 workspaces · 34 tabs</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Save workspace -->
+  <div class="screen-wrap">
+    <div class="device-label">Save workspace</div>
+    <div class="save-popup">
+      <div class="save-header">
+        <div>
+          <div class="save-title">Save 11 tabs</div>
+          <div class="save-sub">Name this moment. Close without fear.</div>
+        </div>
+        <button class="close-btn">✕</button>
+      </div>
+
+      <!-- Tab preview -->
+      <div class="tab-preview">
+        <div class="favicon-stack">
+          <div class="favicon" style="background:#1a2744">🔵</div>
+          <div class="favicon" style="background:#1e1e1e">⚫</div>
+          <div class="favicon" style="background:#1a2744">🟦</div>
+          <div class="favicon" style="background:#2a1a1a">🔴</div>
+          <div class="favicon" style="background:#1a2a1a">🟢</div>
+          <div class="favicon" style="background:#241a2a">🟣</div>
+        </div>
+        <span class="favicon-more">+5 more</span>
+      </div>
+
+      <div class="save-form">
+        <div class="field-group">
+          <div class="field-label">Workspace name</div>
+          <input class="text-input" type="text" value="Client X research" placeholder="Name this workspace…">
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Why are you saving this?</div>
+          <textarea class="note-input" placeholder="Add a note to your future self… (optional)">Competitive analysis before Thursday call</textarea>
+        </div>
+
+        <div class="field-group">
+          <div class="field-label">Color tag</div>
+          <div class="color-picker">
+            <div class="color-swatch selected" style="background:#5cba8a"></div>
+            <div class="color-swatch" style="background:#7bafd4"></div>
+            <div class="color-swatch" style="background:#e8a84b"></div>
+            <div class="color-swatch" style="background:#c47be0"></div>
+            <div class="color-swatch" style="background:#e07070"></div>
+            <div class="color-swatch" style="background:#c4814a"></div>
+          </div>
+        </div>
+
+        <div class="save-actions">
+          <button class="btn-save-close">Save &amp; close all tabs</button>
+          <button class="btn-save-only">Save only</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Workspace peek -->
+  <div class="screen-wrap">
+    <div class="device-label">Peek inside</div>
+    <div class="peek-popup">
+      <div class="peek-header">
+        <div class="peek-back">‹ Back to workspaces</div>
+        <div class="peek-title-row">
+          <div class="peek-stripe" style="background:#7bafd4"></div>
+          <div>
+            <div class="peek-name">Job hunting</div>
+            <div class="peek-saved-note">Saved yesterday · no note</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="peek-stats">
+        <div class="peek-stat">
+          <div class="peek-stat-val">14</div>
+          <div class="peek-stat-key">Tabs</div>
+        </div>
+        <div class="peek-stat" style="border-left:1px solid var(--line);padding-left:16px">
+          <div class="peek-stat-val">6</div>
+          <div class="peek-stat-key">Domains</div>
+        </div>
+        <div class="peek-stat" style="border-left:1px solid var(--line);padding-left:16px">
+          <div class="peek-stat-val" style="font-size:14px;padding-top:4px">Yesterday</div>
+          <div class="peek-stat-key">Saved</div>
+        </div>
+      </div>
+
+      <div class="peek-tabs">
+        <div class="peek-tab">
+          <div class="peek-fav">🔵</div>
+          <span class="peek-tab-title">Senior Product Designer — Notion</span>
+          <span class="peek-tab-domain">notion.so</span>
+        </div>
+        <div class="peek-tab">
+          <div class="peek-fav">💼</div>
+          <span class="peek-tab-title">Product Manager, Growth — Linear</span>
+          <span class="peek-tab-domain">linear.app</span>
+        </div>
+        <div class="peek-tab">
+          <div class="peek-fav">🟢</div>
+          <span class="peek-tab-title">Head of Design — Vercel</span>
+          <span class="peek-tab-domain">vercel.com</span>
+        </div>
+        <div class="peek-tab">
+          <div class="peek-fav">⬜</div>
+          <span class="peek-tab-title">PM roles at early-stage startups</span>
+          <span class="peek-tab-domain">wellfound.com</span>
+        </div>
+        <div class="peek-tab">
+          <div class="peek-fav">🔴</div>
+          <span class="peek-tab-title">How to negotiate your offer (2024)</span>
+          <span class="peek-tab-domain">levels.fyi</span>
+        </div>
+        <div class="peek-tab">
+          <div class="peek-fav">⬛</div>
+          <span class="peek-tab-title">My resume — Google Docs</span>
+          <span class="peek-tab-domain">docs.google.com</span>
+        </div>
+        <div class="peek-tab">
+          <div class="peek-fav">🟦</div>
+          <span class="peek-tab-title">+8 more tabs</span>
+          <span class="peek-tab-domain">···</span>
+        </div>
+      </div>
+
+      <div class="peek-actions">
+        <button class="btn-open-all">Open all 14 tabs</button>
+        <button class="btn-secondary">Rename</button>
+        <button class="btn-secondary">Delete</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Color swatch picker interaction
+  document.querySelectorAll('.color-swatch').forEach(swatch => {
+    swatch.addEventListener('click', () => {
+      document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+      swatch.classList.add('selected');
+    });
+  });
+
+  // Hover interaction on workspace cards showing open state
+  document.querySelectorAll('.ws-card').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      card.querySelector('.ws-actions').style.opacity = '1';
+    });
+    card.addEventListener('mouseleave', () => {
+      card.querySelector('.ws-actions').style.opacity = '0';
+    });
+  });
+</script>
+</body>
+</html>

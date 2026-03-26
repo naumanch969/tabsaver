@@ -1,0 +1,319 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+.wrap { padding: 1.5rem 0; font-family: var(--font-sans); }
+.tabs { display: flex; gap: 4px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.tab { padding: 6px 14px; font-size: 13px; border: 0.5px solid var(--color-border-tertiary); border-radius: 20px; cursor: pointer; color: var(--color-text-secondary); background: transparent; transition: all 0.15s; }
+.tab:hover { background: var(--color-background-secondary); }
+.tab.active { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); }
+.panel { display: none; }
+.panel.active { display: block; }
+.section { margin-bottom: 1.75rem; }
+.section-title { font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--color-text-tertiary); margin-bottom: 10px; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 16px 18px; margin-bottom: 10px; }
+.card-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 4px; }
+.card-body { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.chip { display: inline-block; font-size: 11px; font-weight: 500; padding: 3px 10px; border-radius: 20px; margin-right: 4px; margin-top: 6px; }
+.step { display: flex; gap: 14px; align-items: flex-start; margin-bottom: 14px; }
+.step-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; flex-shrink: 0; margin-top: 1px; }
+.step-content { flex: 1; }
+.step-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 3px; }
+.step-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.5; }
+.mockup { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); padding: 16px; }
+.mock-bar { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; }
+.mock-row { display: flex; align-items: center; justify-content: space-between; }
+.mock-label { font-size: 13px; color: var(--color-text-primary); font-weight: 500; }
+.mock-sub { font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px; }
+.mock-badge { font-size: 10px; padding: 2px 8px; border-radius: 10px; }
+.mock-btn { font-size: 11px; padding: 4px 10px; border-radius: 6px; border: 0.5px solid var(--color-border-tertiary); background: transparent; cursor: pointer; color: var(--color-text-secondary); }
+.mock-active { border-color: #534AB7; background: #EEEDFE; color: #534AB7; }
+.divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 1.25rem 0; }
+.priority-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+.priority-row:last-child { border-bottom: none; }
+.p-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.p-name { font-size: 14px; color: var(--color-text-primary); flex: 1; }
+.p-tag { font-size: 11px; color: var(--color-text-tertiary); }
+.p-badge { font-size: 10px; font-weight: 500; padding: 2px 10px; border-radius: 20px; }
+.flow-step { position: relative; display: flex; gap: 12px; padding-bottom: 20px; }
+.flow-step:not(:last-child)::before { content: ''; position: absolute; left: 11px; top: 24px; bottom: 0; width: 1px; background: var(--color-border-tertiary); }
+.flow-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; margin-top: 1px; }
+.flow-body { flex: 1; padding-top: 2px; }
+.flow-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+.flow-desc { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; margin-top: 2px; }
+</style>
+<div class="wrap">
+  <div class="tabs">
+    <button class="tab active" onclick="showPanel('anatomy')">What it does</button>
+    <button class="tab" onclick="showPanel('ux')">The UX</button>
+    <button class="tab" onclick="showPanel('moments')">Key moments</button>
+    <button class="tab" onclick="showPanel('build')">What to build</button>
+  </div>
+
+  <!-- PANEL 1: ANATOMY -->
+  <div class="panel active" id="panel-anatomy">
+    <div class="section">
+      <div class="section-title">The one-liner</div>
+      <div class="card">
+        <div class="card-title" style="font-size:15px">Save your open tabs as a named workspace. Close them without fear. Reopen in one click.</div>
+        <div class="card-body" style="margin-top:6px">That's it. Everything else is polish around this core loop.</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Core capabilities</div>
+      <div class="row">
+        <div class="card">
+          <div class="card-title">Save workspace</div>
+          <div class="card-body">Snapshot all open tabs (or selected ones) into a named group. Timestamp it. Done.</div>
+          <span class="chip" style="background:#EEEDFE;color:#534AB7">Save</span>
+        </div>
+        <div class="card">
+          <div class="card-title">Restore workspace</div>
+          <div class="card-body">Reopen all tabs from a workspace — in a new window or replace current session.</div>
+          <span class="chip" style="background:#E1F5EE;color:#0F6E56">Restore</span>
+        </div>
+        <div class="card">
+          <div class="card-title">Manage workspaces</div>
+          <div class="card-body">Rename, delete, merge, or peek inside a saved workspace before opening.</div>
+          <span class="chip" style="background:#FAEEDA;color:#854F0B">Manage</span>
+        </div>
+        <div class="card">
+          <div class="card-title">Add note at save</div>
+          <div class="card-body">"Why did I save this?" — optional one-line context captured at save time.</div>
+          <span class="chip" style="background:#FAECE7;color:#993C1D">Context</span>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Passive features (zero-effort for user)</div>
+      <div class="row3">
+        <div class="card">
+          <div class="card-title">Auto-crash save</div>
+          <div class="card-body">Every 5 min, silently snapshot open tabs. Insurance the user never thinks about.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Morning resume</div>
+          <div class="card-body">On first browser open: "Resume yesterday?" One click. Feels magical.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Tab count badge</div>
+          <div class="card-body">Extension icon shows how many tabs are open. Small, glanceable, useful.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: UX -->
+  <div class="panel" id="panel-ux">
+    <div class="section">
+      <div class="section-title">Extension popup — main screen</div>
+      <div class="mockup">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <span style="font-size:15px;font-weight:500;color:var(--color-text-primary)">Tab Saver</span>
+          <span style="font-size:12px;color:var(--color-text-tertiary)">12 tabs open</span>
+        </div>
+        <button style="width:100%;padding:10px;background:#534AB7;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;margin-bottom:14px">
+          Save current tabs as workspace →
+        </button>
+        <div class="section-title" style="margin-bottom:8px">Your workspaces</div>
+        <div class="mock-bar">
+          <div class="mock-row">
+            <div>
+              <div class="mock-label">Client X research</div>
+              <div class="mock-sub">8 tabs · saved 2h ago</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="mock-btn mock-active">Open</button>
+              <button class="mock-btn">···</button>
+            </div>
+          </div>
+        </div>
+        <div class="mock-bar">
+          <div class="mock-row">
+            <div>
+              <div class="mock-label">Job hunting</div>
+              <div class="mock-sub">14 tabs · saved yesterday</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="mock-btn">Open</button>
+              <button class="mock-btn">···</button>
+            </div>
+          </div>
+        </div>
+        <div class="mock-bar" style="opacity:0.6">
+          <div class="mock-row">
+            <div>
+              <div class="mock-label">Weekend reads</div>
+              <div class="mock-sub">6 tabs · 18 days old · stale?</div>
+            </div>
+            <div style="display:flex;gap:6px">
+              <button class="mock-btn">Open</button>
+              <button class="mock-btn">···</button>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:12px;font-size:12px;color:var(--color-text-tertiary)">+ 2 archived workspaces</div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Save flow (popup)</div>
+      <div class="mockup">
+        <div style="font-size:13px;font-weight:500;color:var(--color-text-primary);margin-bottom:12px">Saving 12 tabs</div>
+        <input style="width:100%;padding:9px 12px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:13px;background:var(--color-background-primary);color:var(--color-text-primary);margin-bottom:8px" placeholder="Name this workspace..." value="Client X research">
+        <input style="width:100%;padding:9px 12px;border:0.5px solid var(--color-border-tertiary);border-radius:8px;font-size:13px;background:var(--color-background-primary);color:var(--color-text-secondary);margin-bottom:12px" placeholder="Why are you saving this? (optional)">
+        <div style="display:flex;gap:8px">
+          <button style="flex:1;padding:9px;background:#534AB7;color:#fff;border:none;border-radius:8px;font-size:13px;cursor:pointer">Save &amp; close tabs</button>
+          <button style="flex:1;padding:9px;background:transparent;border:0.5px solid var(--color-border-tertiary);border-radius:8px;font-size:13px;color:var(--color-text-secondary);cursor:pointer">Save only</button>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="section-title">Design principles</div>
+      <div class="row">
+        <div class="card">
+          <div class="card-title">2 clicks max</div>
+          <div class="card-body">Save workspace = icon click + one button. Never more. Speed is the feature.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Never destructive</div>
+          <div class="card-body">Close tabs only when user explicitly says "Save & close." Never surprise-delete anything.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Always glanceable</div>
+          <div class="card-body">Popup opens to your workspace list instantly. No loading, no splash screen.</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Inline, no new tab</div>
+          <div class="card-body">Everything happens in the popup. Don't redirect users to a settings page to do basic things.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: KEY MOMENTS -->
+  <div class="panel" id="panel-moments">
+    <div class="section">
+      <div class="section-title">The moments that make users stay</div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:#EEEDFE;color:#534AB7;font-size:13px">1</div>
+        <div class="flow-body">
+          <div class="flow-title">First save — "Oh, this is it"</div>
+          <div class="flow-desc">User saves their first workspace. Sees tabs close cleanly. Immediately feels lighter. This is the aha moment. It must happen in the first 90 seconds of installing.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:#E1F5EE;color:#0F6E56;font-size:13px">2</div>
+        <div class="flow-body">
+          <div class="flow-title">Next morning — "It remembered"</div>
+          <div class="flow-desc">"Resume yesterday's session?" appears on browser open. User clicks yes. All their tabs are back in 2 seconds. This is when they become a daily user.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:#FAEEDA;color:#854F0B;font-size:13px">3</div>
+        <div class="flow-body">
+          <div class="flow-title">Crash recovery — "It saved me"</div>
+          <div class="flow-desc">Browser crashes. User panics. Opens Tab Saver. Sees "Auto-saved 4 min ago." Restores everything. Emotional peak — they tell someone about this.</div>
+        </div>
+      </div>
+      <div class="flow-step">
+        <div class="flow-icon" style="background:#FAECE7;color:#993C1D;font-size:13px">4</div>
+        <div class="flow-body">
+          <div class="flow-title">Share moment — "Here, look at this"</div>
+          <div class="flow-desc">User shares a workspace link with a colleague. Colleague installs the extension to open it. One organic install from a single share. This is your growth loop.</div>
+        </div>
+      </div>
+      <div class="flow-step" style="padding-bottom:0">
+        <div class="flow-icon" style="background:#E6F1FB;color:#185FA5;font-size:13px">5</div>
+        <div class="flow-body">
+          <div class="flow-title">Stale nudge — "Oh right, I forgot"</div>
+          <div class="flow-desc">User sees "Weekend reads · 18 days old." Clicks through, reads one article, deletes two dead links. Workspace inbox-zero. Keeps them engaged past the first week.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 4: BUILD -->
+  <div class="panel" id="panel-build">
+    <div class="section">
+      <div class="section-title">MVP — ship this first</div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#534AB7"></div>
+        <div class="p-name">Save workspace (all tabs → named group)</div>
+        <span class="p-badge" style="background:#EEEDFE;color:#534AB7">Must</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#534AB7"></div>
+        <div class="p-name">Restore workspace (full reopen)</div>
+        <span class="p-badge" style="background:#EEEDFE;color:#534AB7">Must</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#534AB7"></div>
+        <div class="p-name">Optional note at save time</div>
+        <span class="p-badge" style="background:#EEEDFE;color:#534AB7">Must</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#0F6E56"></div>
+        <div class="p-name">Auto crash-save (silent, every 5 min)</div>
+        <span class="p-badge" style="background:#E1F5EE;color:#0F6E56">Must</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#0F6E56"></div>
+        <div class="p-name">Morning resume prompt</div>
+        <span class="p-badge" style="background:#E1F5EE;color:#0F6E56">Must</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#854F0B"></div>
+        <div class="p-name">Rename / delete workspace</div>
+        <span class="p-badge" style="background:#FAEEDA;color:#854F0B">Should</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#854F0B"></div>
+        <div class="p-name">Stale workspace nudge (14+ days)</div>
+        <span class="p-badge" style="background:#FAEEDA;color:#854F0B">Should</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="section">
+      <div class="section-title">V2 — after first 500 users</div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#185FA5"></div>
+        <div class="p-name">Share workspace as link</div>
+        <span class="p-badge" style="background:#E6F1FB;color:#185FA5">Growth</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#185FA5"></div>
+        <div class="p-name">Smart archive (30-day auto-move)</div>
+        <span class="p-badge" style="background:#E6F1FB;color:#185FA5">Retention</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#185FA5"></div>
+        <div class="p-name">Peek inside workspace before opening</div>
+        <span class="p-badge" style="background:#E6F1FB;color:#185FA5">Polish</span>
+      </div>
+      <div class="priority-row">
+        <div class="p-dot" style="background:#185FA5"></div>
+        <div class="p-name">Sync across devices (Chrome account)</div>
+        <span class="p-badge" style="background:#E6F1FB;color:#185FA5">Power users</span>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="section">
+      <div class="section-title">What NOT to build in v1</div>
+      <div class="card" style="border-color:#FCEBEB">
+        <div class="card-body" style="color:var(--color-text-secondary)">
+          No tags or folders. No search. No team sharing. No browser history. No AI. No settings page with 20 options. Complexity kills the aha moment — one clean loop first.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+</script>
