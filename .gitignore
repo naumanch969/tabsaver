@@ -8,5 +8,7 @@ dist
 .agent
 
 sample.html
-tab_saver_product_plan.html
 tabsaver_logo_system.html
+tab_saver_product_plan.html
+
+*.zip

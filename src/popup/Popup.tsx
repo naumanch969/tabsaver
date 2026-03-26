@@ -259,6 +259,26 @@ const Popup: React.FC = () => {
     </>
   );
 
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renamedName, setRenamedName] = useState('');
+
+  const handleRenameSave = () => {
+    if (!selectedWorkspace || !renamedName.trim()) {
+      setIsRenaming(false);
+      return;
+    }
+
+    const updated = workspaces.map(ws => 
+      ws.id === selectedWorkspace.id ? { ...ws, name: renamedName, updatedAt: Date.now() } : ws
+    );
+
+    chrome.storage.local.set({ workspaces: updated }, () => {
+      setWorkspaces(updated);
+      setSelectedWorkspace({ ...selectedWorkspace, name: renamedName });
+      setIsRenaming(false);
+    });
+  };
+
   const renderDetailView = () => {
     if (!selectedWorkspace) return null;
     const domains = getDomainCount(selectedWorkspace.tabs);
@@ -266,13 +286,23 @@ const Popup: React.FC = () => {
     return (
       <div className="detail-view">
         <div className="view-header">
-          <div className="back-btn" onClick={() => setView('list')}>
+          <div className="back-btn" onClick={() => { setView('list'); setIsRenaming(false); }}>
             ‹ Back to workspaces
           </div>
           <div className="detail-title-section">
             <div className="detail-stripe" style={{ background: selectedWorkspace.color ? COLOR_MAP[selectedWorkspace.color] : 'var(--accent)' }}></div>
             <div>
-              <div className="detail-title serif">{selectedWorkspace.name}</div>
+              {isRenaming ? (
+                <input
+                  className="rename-input"
+                  value={renamedName}
+                  onChange={(e) => setRenamedName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleRenameSave()}
+                  autoFocus
+                />
+              ) : (
+                <div className="detail-title serif">{selectedWorkspace.name}</div>
+              )}
               <div className="detail-subtitle">{formatDateFull(selectedWorkspace.createdAt)} · {selectedWorkspace.note || 'no note'}</div>
             </div>
           </div>
@@ -315,7 +345,20 @@ const Popup: React.FC = () => {
           <button className="btn-primary" onClick={() => openWorkspace(selectedWorkspace)}>
             Open all {selectedWorkspace.tabs.length} tabs
           </button>
-          <button className="btn-secondary" style={{ flex: 0.5 }}>Rename</button>
+          {isRenaming ? (
+            <button className="btn-secondary" style={{ flex: 0.5, border: '1px solid var(--accent)' }} onClick={handleRenameSave}>Save</button>
+          ) : (
+            <button 
+              className="btn-secondary" 
+              style={{ flex: 0.5 }} 
+              onClick={() => {
+                setRenamedName(selectedWorkspace.name);
+                setIsRenaming(true);
+              }}
+            >
+              Rename
+            </button>
+          )}
           <div
             className="btn-secondary"
             style={{ flex: 0.5, color: '#e07070' }}
