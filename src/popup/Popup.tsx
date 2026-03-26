@@ -226,7 +226,7 @@ const Popup: React.FC = () => {
               if (!searchQuery) return true;
               const query = searchQuery.toLowerCase();
               return ws.name.toLowerCase().includes(query) || 
-                     ws.tabs.some(t => t.title.toLowerCase().includes(query));
+                     ws.tabs.some(t => t.title.toLowerCase().includes(query) || (t.url && t.url.toLowerCase().includes(query)));
             })
             .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
             .map((ws) => (
