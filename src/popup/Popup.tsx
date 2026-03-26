@@ -24,6 +24,7 @@ const Popup: React.FC = () => {
   const [currentTabs, setCurrentTabs] = useState<TabInfo[]>([]);
   const [includedIndices, setIncludedIndices] = useState<Set<number>>(new Set());
   const [showTabList, setShowTabList] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
 
@@ -148,25 +149,49 @@ const Popup: React.FC = () => {
       <div className="topbar">
         <div className="logo">
           <div className="logo-icon">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 2L14.4 9.6H22L15.8 14.2L18.2 21.8L12 17.2L5.8 21.8L8.2 14.2L2 9.6H9.6L12 2Z" fill="var(--accent)" />
+            <svg width="24" height="24" viewBox="0 0 56 56" fill="none">
+              <rect x="14" y="20" width="12" height="6" rx="3" fill="#e8a84b" opacity="0.2" />
+              <rect x="14" y="24" width="36" height="22" rx="5" fill="#e8a84b" opacity="0.2" />
+              <rect x="10" y="15" width="12" height="6" rx="3" fill="#e8a84b" opacity="0.45" />
+              <rect x="10" y="19" width="36" height="22" rx="5" fill="#e8a84b" opacity="0.45" />
+              <rect x="6" y="10" width="14" height="7" rx="3.5" fill="#e8a84b" />
+              <rect x="6" y="15" width="36" height="22" rx="5" fill="#e8a84b" />
+              <rect x="13" y="22" width="16" height="2" rx="1" fill="#171610" opacity="0.5" />
+              <rect x="13" y="27" width="10" height="2" rx="1" fill="#171610" opacity="0.3" />
             </svg>
           </div>
-          <div className="logo-name">Tab Saver</div>
+          <div className="logo-name">
+            <span className="wm-tab">Tab</span>
+            <span className="wm-dot"></span>
+            <span className="wm-saver">Saver</span>
+          </div>
         </div>
-        <div className="caption serif" style={{ fontStyle: 'italic', color: 'var(--t3)', opacity: 0.8 }}>v1.1.0</div>
+        {workspaces.length > 0 && (
+          <button 
+            className="resume-btn-header" 
+            onClick={() => openWorkspace(workspaces[0])}
+            title={`Restore: ${workspaces[0].name}`}
+          >
+            Resume Last
+          </button>
+        )}
       </div>
 
-      {workspaces.length > 0 && (
-        <div className="resume-banner">
-          <div className="resume-icon">☕</div>
-          <div className="resume-text">
-            <div className="resume-title" style={{ fontSize: '12px', fontWeight: 500, color: 'var(--accent)' }}>Resume where you left off?</div>
-            <div className="resume-sub" style={{ fontSize: '11px', color: 'var(--t3)' }}>Last session: {workspaces[0].name}</div>
-          </div>
-          <button className="resume-btn" onClick={() => openWorkspace(workspaces[0])}>Open</button>
+      <div className="search-container" style={{ margin: '14px 14px 0' }}>
+        <div className="search-wrapper">
+          <span className="search-icon">🔍</span>
+          <input 
+            type="text" 
+            className="search-input" 
+            placeholder="Search vaults or tabs..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          {searchQuery && (
+            <button className="search-clear" onClick={() => setSearchQuery('')}>×</button>
+          )}
         </div>
-      )}
+      </div>
 
       <div className="save-cta" style={{ margin: '14px 14px 0' }}>
         <button
@@ -174,7 +199,7 @@ const Popup: React.FC = () => {
           style={{ width: '100%', borderStyle: 'dashed', background: 'var(--bg3)', justifyContent: 'flex-start' }}
           onClick={startSaving}
         >
-          <div className="logo-icon" style={{ flexShrink: 0 }}>＋</div>
+          <div className="action-icon" style={{ flexShrink: 0 }}>＋</div>
           <div className="ws-info">
             <div className="ws-name">Save Current Session</div>
             <div className="ws-meta" style={{ marginTop: '0' }}><span className="caption">Snapshot current window tabs</span></div>
@@ -196,22 +221,39 @@ const Popup: React.FC = () => {
             <p className="caption" style={{ marginTop: '4px' }}>Sessions you save will appear here.</p>
           </div>
         ) : (
-          workspaces.map((ws) => (
-            <div key={ws.id} className="ws-card" onClick={() => { setSelectedWorkspace(ws); setView('detail'); }}>
-              <div className="ws-stripe" style={{ background: ws.color ? COLOR_MAP[ws.color] : 'var(--accent)' }}></div>
-              <div className="ws-info">
-                <div className="ws-name">{ws.name}</div>
-                <div className="ws-meta">
-                  <span className="ws-tab-count serif" style={{ fontSize: '10px' }}>{ws.tabs.length} tabs</span>
-                  <div className="ws-dot-sep"></div>
-                  <span className="ws-time">{getTimeLabel(ws.createdAt)}</span>
+          workspaces
+            .filter(ws => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              return ws.name.toLowerCase().includes(query) || 
+                     ws.tabs.some(t => t.title.toLowerCase().includes(query));
+            })
+            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+            .map((ws) => (
+              <div key={ws.id} className="ws-card" onClick={() => { setSelectedWorkspace(ws); setView('detail'); }}>
+                <div className="ws-stripe" style={{ background: ws.color ? COLOR_MAP[ws.color] : 'var(--accent)' }}></div>
+                <div className="ws-info">
+                  <div className="ws-name">{ws.name}</div>
+                  <div className="ws-meta">
+                    <span className="ws-tab-count serif" style={{ fontSize: '10px' }}>{ws.tabs.length} tabs</span>
+                    <div className="ws-dot-sep"></div>
+                    <span className="ws-time">{getTimeLabel(ws.createdAt)}</span>
+                  </div>
+                </div>
+                <div className="ws-actions" onClick={(e) => e.stopPropagation()}>
+                  <button className="ws-open-btn" onClick={() => openWorkspace(ws)}>Restore</button>
                 </div>
               </div>
-              <div className="ws-actions" onClick={(e) => e.stopPropagation()}>
-                <button className="ws-open-btn" onClick={() => openWorkspace(ws)}>Restore</button>
-              </div>
-            </div>
-          ))
+            ))
+        )}
+        {workspaces.length > 0 && searchQuery && workspaces.filter(ws => {
+          const query = searchQuery.toLowerCase();
+          return ws.name.toLowerCase().includes(query) || 
+                 ws.tabs.some(t => t.title.toLowerCase().includes(query));
+        }).length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--t3)' }}>
+            <p className="caption">No results matching "{searchQuery}"</p>
+          </div>
         )}
       </div>
     </>
@@ -256,7 +298,7 @@ const Popup: React.FC = () => {
             let domain = '';
             try { domain = new URL(tab.url).hostname.replace('www.', ''); } catch (e) { }
             return (
-              <div key={idx} className="tab-item">
+              <div key={idx} className="tab-item" style={{ cursor: 'pointer' }} onClick={() => chrome.tabs.create({ url: tab.url })}>
                 <div className="tab-icon">
                   {tab.favIconUrl ? <img src={tab.favIconUrl} style={{ width: '16px', height: '16px' }} /> : '🌐'}
                 </div>
@@ -315,16 +357,22 @@ const Popup: React.FC = () => {
       {showTabList && (
         <div className="tab-inclusion-list">
           {currentTabs.map((tab, i) => (
-            <div key={i} className="tab-inclusion-item">
+            <div 
+              key={i} 
+              className="tab-inclusion-item" 
+              style={{ cursor: 'pointer' }}
+              onClick={() => {
+                const next = new Set(includedIndices);
+                if (next.has(i)) next.delete(i);
+                else next.add(i);
+                setIncludedIndices(next);
+              }}
+            >
               <input
                 type="checkbox"
                 checked={includedIndices.has(i)}
-                onChange={(e) => {
-                  const next = new Set(includedIndices);
-                  if (e.target.checked) next.add(i);
-                  else next.delete(i);
-                  setIncludedIndices(next);
-                }}
+                onChange={(e) => { e.stopPropagation(); }} // Managed by parent onClick
+                onClick={(e) => { e.stopPropagation(); }} // Prevent double trigger
               />
               <div className="tab-inclusion-icon">
                 {tab.favIconUrl ? <img src={tab.favIconUrl} style={{ width: '14px', height: '14px' }} /> : '🌐'}
