@@ -27,14 +27,23 @@ const Popup: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+  const [currentTabUrls, setCurrentTabUrls] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadWorkspaces();
+    updateCurrentTabUrls();
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }, 10000);
     return () => clearInterval(timer);
   }, []);
+
+  const updateCurrentTabUrls = () => {
+    chrome.tabs.query({ currentWindow: true }, (tabs) => {
+      const urls = new Set(tabs.map(t => t.url).filter((url): url is string => !!url));
+      setCurrentTabUrls(urls);
+    });
+  };
 
   const loadWorkspaces = () => {
     chrome.storage.local.get(['workspaces'], (result) => {
@@ -57,7 +66,8 @@ const Popup: React.FC = () => {
       setShowTabList(false); // List closed by default
       setSaveName('');
       setSaveNote('');
-      setSaveColor('yellow');
+      const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+      setSaveColor(randomColor);
       setView('save');
     });
   };
@@ -102,9 +112,12 @@ const Popup: React.FC = () => {
   };
 
   const openWorkspace = (ws: Workspace) => {
-    ws.tabs.forEach((tab) => {
+    ws.tabs.forEach(tab => {
       chrome.tabs.create({ url: tab.url });
     });
+    setTimeout(() => {
+      updateCurrentTabUrls();
+    }, 1000);
   };
 
   const deleteWorkspace = (id: string) => {
@@ -113,6 +126,25 @@ const Popup: React.FC = () => {
       setWorkspaces(updated);
       setSelectedWorkspace(null);
       setView('list');
+    });
+  };
+
+  const deleteTab = (workspaceId: string, tabIndex: number) => {
+    const updated = workspaces.map(ws => {
+      if (ws.id === workspaceId) {
+        const updatedTabs = [...ws.tabs];
+        updatedTabs.splice(tabIndex, 1);
+        return { ...ws, tabs: updatedTabs, updatedAt: Date.now() };
+      }
+      return ws;
+    });
+
+    chrome.storage.local.set({ workspaces: updated }, () => {
+      setWorkspaces(updated);
+      if (selectedWorkspace?.id === workspaceId) {
+        const ws = updated.find(w => w.id === workspaceId);
+        if (ws) setSelectedWorkspace(ws);
+      }
     });
   };
 
@@ -142,6 +174,82 @@ const Popup: React.FC = () => {
       } catch (e) { }
     });
     return domains.size;
+  };
+
+  const renderFaviconStack = (workspace: Workspace) => {
+    // Get unique favicons, filter out empty ones
+    const icons = workspace.tabs
+      .map(t => t.favIconUrl)
+      .filter((url, i, self) => !!url && self.indexOf(url) === i)
+      .slice(0, 5);
+
+    if (icons.length === 0) return null;
+
+    return (
+      <div className="tab-icons-group">
+        {icons.map((url, i) => (
+          <img 
+            key={i} 
+            src={url} 
+            className="small-icon" 
+            alt="tab" 
+            style={{ 
+              width: '18px', 
+              height: '18px', 
+              border: '2px solid var(--bg2)',
+              backgroundColor: 'var(--bg3)',
+              marginLeft: i === 0 ? 0 : '-8px'
+            }} 
+          />
+        ))}
+        {workspace.tabs.length > icons.length && (
+          <div className="small-icon" style={{ 
+            width: '18px', 
+            height: '18px', 
+            fontSize: '8px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            backgroundColor: 'var(--bg3)',
+            color: 'var(--t3)',
+            border: '2px solid var(--bg2)',
+            marginLeft: '-8px'
+          }}>
+            +{workspace.tabs.length - icons.length}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderWorkspaceCard = (ws: Workspace) => {
+    const openCount = ws.tabs.filter(t => currentTabUrls.has(t.url)).length;
+    const isFull = openCount === ws.tabs.length;
+    const isSome = openCount > 0 && !isFull;
+    
+    return (
+      <div key={ws.id} className="ws-card" onClick={() => { setSelectedWorkspace(ws); setView('detail'); }}>
+        <div className="ws-stripe" style={{ background: ws.color ? COLOR_MAP[ws.color] : 'var(--accent)' }}></div>
+        <div className="ws-info">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            {renderFaviconStack(ws)}
+            {isFull && <span className="caption" style={{ color: COLOR_MAP.green, fontSize: '9px', textTransform: 'uppercase' }}>● Already open</span>}
+            {isSome && <span className="caption" style={{ color: COLOR_MAP.blue, fontSize: '9px', textTransform: 'uppercase' }}>● {openCount}/{ws.tabs.length} open</span>}
+          </div>
+          <div className="ws-name">
+            {ws.name}
+          </div>
+          <div className="ws-meta">
+            <span className="ws-tab-count serif" style={{ fontSize: '10px' }}>{ws.tabs.length} tabs</span>
+            <div className="ws-dot-sep"></div>
+            <span className="ws-time">{getTimeLabel(ws.createdAt)}</span>
+          </div>
+        </div>
+        <div className="ws-actions" onClick={(e) => e.stopPropagation()}>
+          <button className="ws-open-btn" onClick={() => openWorkspace(ws)}>Restore</button>
+        </div>
+      </div>
+    );
   };
 
   const renderListView = () => (
@@ -221,39 +329,30 @@ const Popup: React.FC = () => {
             <p className="caption" style={{ marginTop: '4px' }}>Sessions you save will appear here.</p>
           </div>
         ) : (
-          workspaces
-            .filter(ws => {
-              if (!searchQuery) return true;
+          !searchQuery ? (
+            workspaces
+              .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+              .map(renderWorkspaceCard)
+          ) : (
+            workspaces.filter(ws => {
               const query = searchQuery.toLowerCase();
               return ws.name.toLowerCase().includes(query) || 
                      ws.tabs.some(t => t.title.toLowerCase().includes(query) || (t.url && t.url.toLowerCase().includes(query)));
-            })
-            .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-            .map((ws) => (
-              <div key={ws.id} className="ws-card" onClick={() => { setSelectedWorkspace(ws); setView('detail'); }}>
-                <div className="ws-stripe" style={{ background: ws.color ? COLOR_MAP[ws.color] : 'var(--accent)' }}></div>
-                <div className="ws-info">
-                  <div className="ws-name">{ws.name}</div>
-                  <div className="ws-meta">
-                    <span className="ws-tab-count serif" style={{ fontSize: '10px' }}>{ws.tabs.length} tabs</span>
-                    <div className="ws-dot-sep"></div>
-                    <span className="ws-time">{getTimeLabel(ws.createdAt)}</span>
-                  </div>
-                </div>
-                <div className="ws-actions" onClick={(e) => e.stopPropagation()}>
-                  <button className="ws-open-btn" onClick={() => openWorkspace(ws)}>Restore</button>
-                </div>
+            }).length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--t3)' }}>
+                <p className="caption">No results matching "{searchQuery}"</p>
               </div>
-            ))
-        )}
-        {workspaces.length > 0 && searchQuery && workspaces.filter(ws => {
-          const query = searchQuery.toLowerCase();
-          return ws.name.toLowerCase().includes(query) || 
-                 ws.tabs.some(t => t.title.toLowerCase().includes(query));
-        }).length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--t3)' }}>
-            <p className="caption">No results matching "{searchQuery}"</p>
-          </div>
+            ) : (
+              workspaces
+                .filter(ws => {
+                  const query = searchQuery.toLowerCase();
+                  return ws.name.toLowerCase().includes(query) || 
+                         ws.tabs.some(t => t.title.toLowerCase().includes(query) || (t.url && t.url.toLowerCase().includes(query)));
+                })
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+                .map(renderWorkspaceCard)
+            )
+          )
         )}
       </div>
     </>
@@ -336,6 +435,19 @@ const Popup: React.FC = () => {
                   <div className="tab-title">{tab.title}</div>
                 </div>
                 <div className="tab-domain">{domain}</div>
+                <div 
+                  className="tab-delete-btn" 
+                  title="Remove from vault"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteTab(selectedWorkspace.id, idx);
+                  }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </div>
               </div>
             );
           })}
@@ -399,6 +511,25 @@ const Popup: React.FC = () => {
 
       {showTabList && (
         <div className="tab-inclusion-list">
+          <div 
+            className="tab-inclusion-item select-all-btn"
+            style={{ borderBottom: '1px solid var(--line)', marginBottom: '4px', position: 'sticky', top: 0, zIndex: 1, background: 'var(--bg2)' }}
+            onClick={() => {
+              if (includedIndices.size === currentTabs.length) {
+                setIncludedIndices(new Set());
+              } else {
+                setIncludedIndices(new Set(currentTabs.map((_, i) => i)));
+              }
+            }}
+          >
+            <input
+              type="checkbox"
+              checked={includedIndices.size === currentTabs.length}
+              onChange={(e) => { e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); }}
+            />
+            <div className="tab-inclusion-title">Select all ({currentTabs.length})</div>
+          </div>
           {currentTabs.map((tab, i) => (
             <div 
               key={i} 
