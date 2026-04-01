@@ -1,4 +1,4 @@
-# 3TabSaver
+# Tab Saver
 
 A very simple way to clear your head by clearing your tabs. 
 
