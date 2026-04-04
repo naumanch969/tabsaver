@@ -33,6 +33,10 @@ const Popup: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [currentTabUrls, setCurrentTabUrls] = useState<Set<string>>(new Set());
 
+  // Inline editing state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+
   ////////////////////////////////////////// EFFECTS ////////////////////////////////////////// 
   useEffect(() => {
     loadWorkspaces();
@@ -41,16 +45,18 @@ const Popup: React.FC = () => {
       setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }, 10000);
 
-    // Focus the main list search on mount for instant typing when opened via shortcut or click
-    const focusTimer = setTimeout(() => {
-      if (view === 'list') listSearchRef.current?.focus();
-    }, 150); 
-
-    return () => {
-      clearInterval(timer);
-      clearTimeout(focusTimer);
-    };
+    return () => clearInterval(timer);
   }, []);
+
+  // Ensure focus on search input whenever list view is shown
+  useEffect(() => {
+    if (view === 'list') {
+      const timer = setTimeout(() => {
+         listSearchRef.current?.focus();
+      }, 50);
+      return () => clearTimeout(timer);
+    }
+  }, [view]);
 
 
 
@@ -67,6 +73,35 @@ const Popup: React.FC = () => {
       if (result.workspaces) {
         setWorkspaces(result.workspaces);
       }
+    });
+  };
+
+  const saveCurrentActiveTab = () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      const activeTab = tabs[0];
+      if (!activeTab || !activeTab.url) return;
+
+      const newWs: Workspace = {
+        id: crypto.randomUUID(),
+        name: activeTab.title || 'Saved Tab',
+        note: `Quick saved: ${new URL(activeTab.url).hostname || 'unknown'}`,
+        tabs: [{
+          title: activeTab.title || 'Untitled',
+          url: activeTab.url || '',
+          favIconUrl: activeTab.favIconUrl
+        }],
+        color: COLORS[Math.floor(Math.random() * COLORS.length)],
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
+
+      chrome.storage.local.get(['workspaces'], (result) => {
+        const current = result.workspaces || [];
+        const updated = [newWs, ...current];
+        chrome.storage.local.set({ workspaces: updated }, () => {
+          setWorkspaces(updated);
+        });
+      });
     });
   };
 
@@ -137,6 +172,22 @@ const Popup: React.FC = () => {
     }, 1000);
   };
 
+  const handleRenameInline = (id: string) => {
+    if (!editingName.trim()) {
+      setEditingId(null);
+      return;
+    }
+
+    const updated = workspaces.map(ws => 
+      ws.id === id ? { ...ws, name: editingName.trim(), updatedAt: Date.now() } : ws
+    );
+
+    chrome.storage.local.set({ workspaces: updated }, () => {
+      setWorkspaces(updated);
+      setEditingId(null);
+    });
+  };
+
   const deleteWorkspace = (id: string) => {
     const updated = workspaces.filter(ws => ws.id !== id);
     chrome.storage.local.set({ workspaces: updated }, () => {
@@ -149,6 +200,7 @@ const Popup: React.FC = () => {
   const deleteTab = (workspaceId: string, tabIndex: number) => {
     const updated = workspaces.map(ws => {
       if (ws.id === workspaceId) {
+        if (ws.tabs.length <= 1) return ws; // Don't allow empty workspaces
         const updatedTabs = [...ws.tabs];
         updatedTabs.splice(tabIndex, 1);
         return { ...ws, tabs: updatedTabs, updatedAt: Date.now() };
@@ -246,7 +298,15 @@ const Popup: React.FC = () => {
     const isSome = openCount > 0 && !isFull;
 
     return (
-      <div key={ws.id} className="ws-card" onClick={() => { setSelectedWorkspace(ws); setView('detail'); }}>
+      <div 
+        key={ws.id} 
+        className="ws-card"
+        onClick={() => {
+          setSelectedWorkspace(ws);
+          setView('detail');
+        }}
+        style={{ cursor: 'pointer' }}
+      >
         <div className="ws-stripe" style={{ background: ws.color ? COLOR_MAP[ws.color] : 'var(--accent)' }}></div>
         <div className="ws-info">
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
@@ -255,7 +315,33 @@ const Popup: React.FC = () => {
             {isSome && <span className="caption" style={{ color: COLOR_MAP.blue, fontSize: '9px', textTransform: 'uppercase' }}>● {openCount}/{ws.tabs.length} open</span>}
           </div>
           <div className="ws-name">
-            {ws.name}
+            {editingId === ws.id ? (
+              <input
+                type="text"
+                className="ws-name-edit"
+                value={editingName}
+                onChange={(e) => setEditingName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleRenameInline(ws.id);
+                  if (e.key === 'Escape') setEditingId(null);
+                }}
+                onBlur={() => handleRenameInline(ws.id)}
+                autoFocus
+                onClick={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div 
+                className="ws-name-text" 
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent card navigation
+                  setEditingId(ws.id);
+                  setEditingName(ws.name);
+                }}
+                title="Click to rename"
+              >
+                {ws.name}
+              </div>
+            )}
           </div>
           <div className="ws-meta">
             <span className="ws-tab-count serif" style={{ fontSize: '10px' }}>{ws.tabs.length} tabs</span>
@@ -264,10 +350,11 @@ const Popup: React.FC = () => {
           </div>
         </div>
         <div className="ws-actions" onClick={(e) => e.stopPropagation()}>
-          <button className="ws-open-btn" onClick={() => openWorkspace(ws)}>Restore</button>
+          <button className="ws-open-btn" onClick={() => openWorkspace(ws)}>RESTORE</button>
         </div>
       </div>
     );
+
   };
 
   const renderListView = () => (
@@ -321,18 +408,29 @@ const Popup: React.FC = () => {
         </div>
       </div>
 
-      <div className="save-cta" style={{ margin: '14px 14px 0' }}>
+      <div className="save-cta-group" style={{ margin: '14px 14px 0', display: 'flex', gap: '8px' }}>
         <button
           className="ws-card"
-          style={{ width: '100%', borderStyle: 'dashed', background: 'var(--bg3)', justifyContent: 'flex-start' }}
+          style={{ flex: 1, borderStyle: 'dashed', background: 'var(--bg3)', justifyContent: 'flex-start', padding: '12px' }}
           onClick={startSaving}
         >
-          <div className="action-icon" style={{ flexShrink: 0 }}>＋</div>
+          <div className="action-icon" style={{ flexShrink: 0, width: '28px', height: '28px', fontSize: '14px' }}>＋</div>
           <div className="ws-info">
-            <div className="ws-name">Save Current Session</div>
-            <div className="ws-meta" style={{ marginTop: '0' }}><span className="caption">Snapshot current window tabs</span></div>
+            <div className="ws-name" style={{ fontSize: '13px' }}>Save All</div>
+            <div className="ws-meta" style={{ marginTop: '0' }}><span className="caption">Whole window</span></div>
           </div>
-          <div style={{ color: 'var(--t3)' }}>→</div>
+        </button>
+        
+        <button
+          className="ws-card"
+          style={{ flex: 1, borderStyle: 'dashed', background: 'var(--bg3)', justifyContent: 'flex-start', padding: '12px' }}
+          onClick={saveCurrentActiveTab}
+        >
+          <div className="action-icon" style={{ flexShrink: 0, width: '28px', height: '28px', fontSize: '14px' }}>🗂️</div>
+          <div className="ws-info">
+            <div className="ws-name" style={{ fontSize: '13px' }}>Current Tab</div>
+            <div className="ws-meta" style={{ marginTop: '0' }}><span className="caption">Quick save</span></div>
+          </div>
         </button>
       </div>
 
@@ -455,19 +553,21 @@ const Popup: React.FC = () => {
                   <div className="tab-title">{tab.title}</div>
                 </div>
                 <div className="tab-domain">{domain}</div>
-                <div
-                  className="tab-delete-btn"
-                  title="Remove from vault"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteTab(selectedWorkspace.id, idx);
-                  }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </div>
+                {selectedWorkspace.tabs.length > 1 && (
+                  <div
+                    className="tab-delete-btn"
+                    title="Remove from vault"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteTab(selectedWorkspace.id, idx);
+                    }}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </div>
+                )}
               </div>
             );
           })}
