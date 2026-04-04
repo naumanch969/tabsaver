@@ -40,8 +40,8 @@ body {
 }
 
 .popup-container {
-  width: 380px;
-  height: 520px;
+  width: 460px;
+  height: 600px;
   display: flex;
   flex-direction: column;
   background: var(--bg);
@@ -451,3 +451,5 @@ body {
   margin-top: -4px;
   margin-bottom: 2px;
 }
+
+
