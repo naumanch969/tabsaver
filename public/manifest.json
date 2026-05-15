@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Tab Saver",
-  "description": "Professional workspace manager with Obsidian Gold aesthetics and auto-snapshot protection.",
+  "name": "TabStratum",
+  "description": "Professional workspace architecture with Industrial Authority aesthetics and cloud vault protection.",
   "version": "1.1.2",
   "action": {
     "default_popup": "index.html",
@@ -24,6 +24,9 @@
     "windows",
     "alarms"
   ],
+  "externally_connectable": {
+    "matches": ["http://localhost:3000/*", "https://*.tabstratum.app/*"]
+  },
   "background": {
     "service_worker": "background.js",
     "type": "module"
@@ -34,7 +37,7 @@
         "default": "Alt+F",
         "mac": "Alt+F"
       },
-      "description": "Open Tab Saver"
+      "description": "Open TabStratum"
     }
   }
 }

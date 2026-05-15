@@ -1,6 +1,6 @@
 import { Workspace } from '../types';
 
-const STORAGE_KEY = 'tab_saver_workspaces';
+const STORAGE_KEY = 'workspaces';
 
 export const storageService = {
   async getWorkspaces(): Promise<Workspace[]> {

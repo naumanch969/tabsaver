@@ -1,19 +1,22 @@
 {
-  "name": "tabsaver",
-  "displayName": "Tab Saver",
+  "name": "tab-stratum-extension",
+  "displayName": "TabStratum",
   "version": "1.1.2",
-  "description": "Save your tabs as workspaces. Close what you don't need, and open them back up when you're ready.",
+  "description": "Professional workspace architecture for browser sessions.",
   "author": "Nauman Chaudhry",
   "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint src"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.104.0",
     "framer-motion": "^11.0.0",
     "lucide-react": "^0.344.0",
+    "nanoid": "^5.1.9",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -22,6 +25,7 @@
     "@types/react": "^18.2.64",
     "@types/react-dom": "^18.2.21",
     "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^9.0.0",
     "typescript": "^5.2.2",
     "vite": "^5.1.4"
   }

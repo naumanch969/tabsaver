@@ -20,7 +20,9 @@ interface ListViewProps {
   onRenameChange: (val: string) => void;
   onRenameSave: (id: string) => void;
   onRenameCancel: () => void;
+  onConnectCloud: () => void;
   searchRef: React.RefObject<HTMLInputElement>;
+  session: any;
 }
 
 const ListView: React.FC<ListViewProps> = ({
@@ -41,7 +43,9 @@ const ListView: React.FC<ListViewProps> = ({
   onRenameChange,
   onRenameSave,
   onRenameCancel,
-  searchRef
+  onConnectCloud,
+  searchRef,
+  session
 }) => {
   const filteredWorkspaces = workspaces.filter(ws => {
     const query = searchQuery.toLowerCase();
@@ -68,7 +72,7 @@ const ListView: React.FC<ListViewProps> = ({
           <div className="logo-name">
             <span className="wm-tab">Tab</span>
             <span className="wm-dot"></span>
-            <span className="wm-saver">Saver</span>
+            <span className="wm-saver">Stratum</span>
           </div>
         </div>
         {workspaces.length > 0 && (
@@ -126,9 +130,24 @@ const ListView: React.FC<ListViewProps> = ({
         </button>
       </div>
 
-      <div className="section-header" style={{ padding: '18px 18px 10px', display: 'flex', justifyContent: 'space-between' }}>
+      <div className="section-header" style={{ padding: '18px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div className="section-title">Saved Vaults</div>
-        <div className="caption">{workspaces.length} total</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {!session ? (
+            <button 
+              onClick={onConnectCloud}
+              style={{ padding: '4px 8px', borderRadius: '4px', background: 'var(--bg3)', border: '1px border var(--br1)', fontSize: '10px font-bold color #e8a84b cursor pointer' }}
+            >
+              ☁️ Connect
+            </button>
+          ) : (
+            <div className="caption" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }}></div>
+              Cloud Synced
+            </div>
+          )}
+          <div className="caption">{workspaces.length} total</div>
+        </div>
       </div>
 
       <div className="workspace-list" style={{ padding: '0 14px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>

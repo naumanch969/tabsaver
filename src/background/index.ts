@@ -6,14 +6,31 @@ const AUTO_SAVE_ALARM = 'auto-save-snapshot';
 const AUTO_SAVE_INTERVAL = 5; // minutes
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('Tab Saver installed. Setting up alarms...');
   setupAlarms();
   updateBadge();
 });
 
 chrome.runtime.onStartup.addListener(() => {
-  console.log('Browser started. Resuming state...');
   updateBadge();
+});
+
+// Handle messages from the website
+chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+  console.log('Received message from external source:', sender.url, message);
+  
+  if (message.type === 'SET_AUTH') {
+    chrome.storage.local.set({ session: message.session }, () => {
+      sendResponse({ success: true });
+    });
+    return true; // Keep message channel open for async response
+  }
+  
+  if (message.type === 'CLEAR_AUTH') {
+    chrome.storage.local.remove(['session'], () => {
+      sendResponse({ success: true });
+    });
+    return true;
+  }
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -47,7 +64,6 @@ async function performAutoSave() {
   };
 
   await storageService.saveWorkspace(autoWorkspace);
-  console.log('Auto-save snapshot created at', new Date().toLocaleTimeString());
 }
 
 async function updateBadge() {

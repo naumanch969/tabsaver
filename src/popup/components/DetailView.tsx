@@ -10,6 +10,7 @@ interface DetailViewProps {
   onDeleteTab: (wsId: string, idx: number) => void;
   onRenameSave: (id: string, name: string) => void;
   onOpenTab: (url: string) => void;
+  onShare: (ws: Workspace) => void;
 }
 
 const DetailView: React.FC<DetailViewProps> = ({
@@ -18,7 +19,8 @@ const DetailView: React.FC<DetailViewProps> = ({
   onDeleteWorkspace,
   onDeleteTab,
   onRenameSave,
-  onOpenTab
+  onOpenTab,
+  onShare
 }) => {
   const [isRenaming, setIsRenaming] = useState(false);
   const [renamedName, setRenamedName] = useState(selectedWorkspace.name);
@@ -111,7 +113,14 @@ const DetailView: React.FC<DetailViewProps> = ({
         })}
       </div>
 
-      <div className="view-actions">
+      <div className="view-actions" style={{ display: 'flex', gap: '8px' }}>
+        <button 
+          className="btn-secondary" 
+          style={{ flex: 1, borderColor: '#e8a84b', color: '#e8a84b' }}
+          onClick={() => onShare(selectedWorkspace)}
+        >
+          {selectedWorkspace.shareId ? 'Copy Share Link' : 'Share Cloud Link'}
+        </button>
         <button 
           className="btn-secondary" 
           style={{ flex: 1, borderColor: '#e07070', color: '#e07070' }}

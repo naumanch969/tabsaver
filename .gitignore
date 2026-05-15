@@ -12,3 +12,5 @@ tabsaver_logo_system.html
 tab_saver_product_plan.html
 
 *.zip
+
+npm_cache

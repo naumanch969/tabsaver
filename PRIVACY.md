@@ -1,18 +1,19 @@
-# Privacy Policy for Tab Saver
+# Privacy Policy for TabStratum
 
-**Last Updated: March 27, 2026**
+**Last Updated: April 26, 2026**
 
-Tab Saver ("the Extension") is committed to protecting your privacy. This Privacy Policy explains how we handle your data.
+TabStratum ("the Extension") is committed to protecting your privacy. This Privacy Policy explains how we handle your data.
 
 ## 1. Single Purpose
 The Extension is a professional browser workspace manager designed to help users capture, organize, and restore browser sessions.
 
 ## 2. Data Collection and Usage
-Tab Saver values your privacy above all else. **We do not collect, sell, or transmit your personal data to any external servers.**
+TabStratum values your privacy. **By default, all your data remains local on your device.**
 
 *   **Web History (Tabs & URLs)**: To function, the Extension captures the URLs and titles of your currently open tabs. This data is used solely to create session snapshots ("Vaults") so you can restore them later.
-*   **Local Storage**: All captured data is stored strictly on your local device using the `chrome.storage` API. We do not have access to your saved sessions.
-*   **Offloading**: No data is ever shared with third parties, used for advertising, or tracked for analytics.
+*   **Local Storage**: Captured data is stored on your local device using the `chrome.storage` API. 
+*   **Optional Cloud Sync**: If you choose to "Connect Cloud", your saved sessions will be synced to our secure database (Supabase) to enable cross-device access. This is entirely optional and requires explicit authentication.
+*   **Offloading**: No data is ever sold to third parties or used for advertising.
 
 ## 3. Permissions Justifications
 *   **tabs**: Used to read URLs and titles of open tabs for session saving and to restore them upon request.

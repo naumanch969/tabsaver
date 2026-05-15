@@ -4,6 +4,8 @@ import { COLORS } from './constants';
 import ListView from './components/ListView';
 import DetailView from './components/DetailView';
 import SaveView from './components/SaveView';
+import { syncService } from '../services/sync';
+import { supabase } from '../services/supabase';
 
 const Popup: React.FC = () => {
   ////////////////////////////////////////// REFS //////////////////////////////////////////
@@ -22,8 +24,8 @@ const Popup: React.FC = () => {
   const [includedIndices, setIncludedIndices] = useState<Set<number>>(new Set());
   const [showTabList, setShowTabList] = useState(false);
   
-  // List UI State
   const [searchQuery, setSearchQuery] = useState('');
+  const [session, setSession] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [currentTabUrls, setCurrentTabUrls] = useState<Set<string>>(new Set());
 
@@ -34,12 +36,24 @@ const Popup: React.FC = () => {
   ////////////////////////////////////////// EFFECTS //////////////////////////////////////////
   useEffect(() => {
     loadWorkspaces();
+    loadSession();
     updateCurrentTabUrls();
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }, 10000);
 
-    return () => clearInterval(timer);
+    // Listen for storage changes (for session relay from background)
+    const storageListener = (changes: any) => {
+      if (changes.session) {
+        setSession(changes.session.newValue);
+      }
+    };
+    chrome.storage.onChanged.addListener(storageListener);
+
+    return () => {
+      clearInterval(timer);
+      chrome.storage.onChanged.removeListener(storageListener);
+    };
   }, []);
 
   // Ensure focus on search input whenever list view is shown
@@ -61,6 +75,46 @@ const Popup: React.FC = () => {
         setWorkspaces(result.workspaces);
       }
     });
+  };
+
+  const loadSession = () => {
+    chrome.storage.local.get(['session'], (result) => {
+      if (result.session) {
+        setSession(result.session);
+      }
+    });
+  };
+
+  const handleConnectCloud = () => {
+    chrome.tabs.create({ url: 'http://localhost:3000/sign-in' });
+  };
+
+  const handleShare = async (ws: Workspace) => {
+    if (!session) {
+      handleConnectCloud();
+      return;
+    }
+
+    try {
+      const { shareId, url } = await syncService.generateShareLink(ws);
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(url);
+      alert('Link copied to clipboard!');
+
+      // Update local state to reflect it's shared
+      const updated = workspaces.map(w => 
+        w.id === ws.id ? { ...w, shareId, isPublic: true } : w
+      );
+      setWorkspaces(updated);
+      chrome.storage.local.set({ workspaces: updated });
+      
+      if (selectedWorkspace?.id === ws.id) {
+        setSelectedWorkspace({ ...selectedWorkspace, shareId, isPublic: true });
+      }
+    } catch (err: any) {
+      alert(`Scaling to cloud failed: ${err.message}`);
+    }
   };
 
   const updateCurrentTabUrls = () => {
@@ -233,6 +287,8 @@ const Popup: React.FC = () => {
           onRenameChange={setEditingName}
           onRenameSave={(id) => handleRenameInline(id)}
           onRenameCancel={() => setEditingId(null)}
+          onConnectCloud={handleConnectCloud}
+          session={session}
         />
       )}
 
@@ -244,6 +300,7 @@ const Popup: React.FC = () => {
           onDeleteTab={deleteTab}
           onRenameSave={(id, name) => handleRenameInline(id, name)}
           onOpenTab={(url) => chrome.tabs.create({ url })}
+          onShare={handleShare}
         />
       )}
 
