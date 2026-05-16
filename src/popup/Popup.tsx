@@ -81,10 +81,21 @@ const Popup: React.FC = () => {
   // Ensure focus on search input whenever list view is shown
   useEffect(() => {
     if (view === 'list') {
-      const timer = setTimeout(() => {
-         listSearchRef.current?.focus();
-      }, 50);
-      return () => clearTimeout(timer);
+      const focusSearch = () => {
+        if (listSearchRef.current) {
+          listSearchRef.current.focus();
+          // Ensure cursor is at the end if there's text
+          const len = listSearchRef.current.value.length;
+          if (len > 0) {
+            listSearchRef.current.setSelectionRange(len, len);
+          }
+        }
+      };
+
+      // Multi-stage focus attempts to catch the popup lifecycle
+      const timers = [10, 50, 150, 300, 600].map(delay => setTimeout(focusSearch, delay));
+      
+      return () => timers.forEach(t => clearTimeout(t));
     }
   }, [view]);
 
