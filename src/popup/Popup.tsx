@@ -137,7 +137,6 @@ const Popup: React.FC = () => {
     // Re-check session
     const { data: { session: currentSession } } = await supabase.auth.getSession();
     if (!currentSession || isSyncing) {
-      if (!currentSession) console.log('Sync skipped: No session');
       return;
     }
 
@@ -147,7 +146,6 @@ const Popup: React.FC = () => {
     
     setIsSyncing(true);
     try {
-      console.log('Starting bidirectional sync. Local count:', localData.length);
       const syncedWorkspaces = await syncService.fullSync(localData);
       
       // Update local storage and state with merged results
@@ -155,7 +153,6 @@ const Popup: React.FC = () => {
         setWorkspaces(syncedWorkspaces);
         showToast('Cloud sync complete');
       });
-      console.log('Full sync completed successfully. Final count:', syncedWorkspaces.length);
     } catch (error: any) {
       console.error('Failed to sync workspaces:', error);
       showToast(`Sync failed: ${error.message || 'Unknown error'}`);

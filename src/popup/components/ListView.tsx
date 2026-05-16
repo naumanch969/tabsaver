@@ -65,13 +65,11 @@ const ListView: React.FC<ListViewProps> = ({
       <div className="topbar">
         <div className="logo" style={{ cursor: 'default' }}>
           <div className="logo-icon">
-            <div style={{ width: '28px', height: '28px', background: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px var(--accent-glow)' }}>
-              <Layers size={14} color="var(--bg)" strokeWidth={3} />
-            </div>
+            <Layers size={16} color="var(--bg)" strokeWidth={3} />
           </div>
           <div className="logo-name">
-            <span style={{ fontFamily: 'Fraunces, serif', fontWeight: '700', fontSize: '18px', color: 'var(--t1)', letterSpacing: '-0.02em' }}>tab</span>
-            <span style={{ fontFamily: 'Fraunces, serif', fontWeight: '700', fontSize: '18px', color: 'var(--accent)', letterSpacing: '-0.02em' }}>stack</span>
+            <span className="wm-tab">tab</span>
+            <span className="wm-stack">stack</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

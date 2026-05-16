@@ -17,8 +17,6 @@ chrome.runtime.onStartup.addListener(() => {
 
 // Handle messages from the website
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
-  console.log('Received message from external source:', sender.url, message);
-  
   if (message.type === 'PING') {
     sendResponse({ success: true, version: chrome.runtime.getManifest().version });
     return true;

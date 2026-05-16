@@ -33,7 +33,7 @@
 
 body {
   background: #0f0e09;
-  font-family: 'DM Sans', sans-serif;
+  font-family: 'Plus Jakarta Sans', 'DM Sans', sans-serif;
   color: var(--t1);
   margin: 0;
   overflow: hidden;
@@ -103,15 +103,24 @@ button {
 }
 
 /* Common Components */
-.logo { display: flex; align-items: center; gap: 8px; }
+.logo { display: flex; align-items: center; gap: 12px; }
 .logo-icon {
-  width: 28px; height: 28px;
+  width: 32px; height: 32px;
+  background: var(--accent);
+  border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 8px 20px var(--accent-glow);
 }
-.logo-name { display: flex; align-items: baseline; gap: 0px; line-height: 1; }
-.wm-tab { font-family: 'Fraunces', serif; font-style: italic; font-weight: 400; font-size: 19px; color: var(--t1); letter-spacing: -0.03em; }
-.wm-saver { font-family: 'DM Sans', sans-serif; font-weight: 300; font-size: 14.5px; color: var(--t3); letter-spacing: 0.02em; }
-.wm-dot { width: 3.5px; height: 3.5px; background: var(--accent); border-radius: 50%; margin: 0 2px 0 3px; align-self: center; }
+.logo-name { 
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800; 
+  font-size: 19px; 
+  letter-spacing: -0.04em;
+  display: flex;
+  align-items: center;
+}
+.wm-tab { color: var(--t1); }
+.wm-stack { color: var(--accent); }
 
 .action-icon {
   width: 26px; height: 26px;
