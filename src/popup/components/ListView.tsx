@@ -1,6 +1,7 @@
 import React from 'react';
 import { Workspace } from '../../types';
 import WorkspaceCard from './WorkspaceCard';
+import { Layers } from 'lucide-react';
 
 interface ListViewProps {
   workspaces: Workspace[];
@@ -58,23 +59,15 @@ const ListView: React.FC<ListViewProps> = ({
   return (
     <>
       <div className="topbar">
-        <div className="logo">
+        <div className="logo" style={{ cursor: 'default' }}>
           <div className="logo-icon">
-            <svg width="24" height="24" viewBox="0 0 56 56" fill="none">
-              <rect x="14" y="20" width="12" height="6" rx="3" fill="#e8a84b" opacity="0.2" />
-              <rect x="14" y="24" width="36" height="22" rx="5" fill="#e8a84b" opacity="0.2" />
-              <rect x="10" y="15" width="12" height="6" rx="3" fill="#e8a84b" opacity="0.45" />
-              <rect x="10" y="19" width="36" height="22" rx="5" fill="#e8a84b" opacity="0.45" />
-              <rect x="6" y="10" width="14" height="7" rx="3.5" fill="#e8a84b" />
-              <rect x="6" y="15" width="36" height="22" rx="5" fill="#e8a84b" />
-              <rect x="13" y="22" width="16" height="2" rx="1" fill="#171610" opacity="0.5" />
-              <rect x="13" y="27" width="10" height="2" rx="1" fill="#171610" opacity="0.3" />
-            </svg>
+            <div style={{ width: '28px', height: '28px', background: 'var(--accent)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px var(--accent-glow)' }}>
+              <Layers size={14} color="var(--bg)" strokeWidth={3} />
+            </div>
           </div>
           <div className="logo-name">
-            <span className="wm-tab">Tab</span>
-            <span className="wm-dot"></span>
-            <span className="wm-saver">Stack</span>
+            <span style={{ fontFamily: 'Fraunces, serif', fontWeight: '700', fontSize: '18px', color: 'var(--t1)', letterSpacing: '-0.02em' }}>tab</span>
+            <span style={{ fontFamily: 'Fraunces, serif', fontWeight: '700', fontSize: '18px', color: 'var(--accent)', letterSpacing: '-0.02em' }}>stack</span>
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -89,14 +82,14 @@ const ListView: React.FC<ListViewProps> = ({
           )}
           {session ? (
             session.user?.user_metadata?.avatar_url ? (
-              <img 
-                src={session.user.user_metadata.avatar_url} 
-                alt="Profile" 
+              <img
+                src={session.user.user_metadata.avatar_url}
+                alt="Profile"
                 onClick={onConnectCloud}
-                style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--line2)', objectFit: 'cover', cursor: 'pointer' }} 
+                style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--line2)', objectFit: 'cover', cursor: 'pointer' }}
               />
             ) : (
-              <div 
+              <div
                 onClick={onConnectCloud}
                 style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent)', color: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
                 title={session.user?.email}
@@ -105,7 +98,7 @@ const ListView: React.FC<ListViewProps> = ({
               </div>
             )
           ) : (
-            <button 
+            <button
               onClick={onConnectCloud}
               style={{ padding: '6px 12px', borderRadius: '6px', background: 'var(--bg3)', border: '1px solid var(--line)', fontSize: '12px', fontWeight: '500', color: 'var(--t1)', cursor: 'pointer', fontFamily: 'inherit' }}
             >
@@ -145,7 +138,7 @@ const ListView: React.FC<ListViewProps> = ({
             <div className="ws-meta" style={{ marginTop: '0' }}><span className="caption">Save window</span></div>
           </div>
         </button>
-        
+
         <button
           className="ws-card"
           style={{ flex: 1, borderStyle: 'dashed', background: 'var(--bg3)', justifyContent: 'flex-start', padding: '12px' }}
@@ -162,14 +155,7 @@ const ListView: React.FC<ListViewProps> = ({
       <div className="section-header" style={{ padding: '18px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <div className="section-title">Saved Tabs</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {!session ? (
-            <button 
-              onClick={onConnectCloud}
-              style={{ padding: '4px 8px', borderRadius: '4px', background: 'var(--bg3)', border: '1px solid var(--line)', fontSize: '10px', fontWeight: 'bold', color: '#e8a84b', cursor: 'pointer' }}
-            >
-              ☁️ Connect
-            </button>
-          ) : (
+          {session && (
             <div className="caption" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }}></div>
               Synced
@@ -195,7 +181,7 @@ const ListView: React.FC<ListViewProps> = ({
             filteredWorkspaces
               .sort((a, b) => b.createdAt - a.createdAt)
               .map(ws => (
-                <WorkspaceCard 
+                <WorkspaceCard
                   key={ws.id}
                   ws={ws}
                   currentTabUrls={currentTabUrls}

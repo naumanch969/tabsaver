@@ -1,5 +1,6 @@
 import { storageService } from '../services/storage';
 import { tabService } from '../services/tabs';
+import { supabase } from '../services/supabase';
 import { Workspace } from '../types';
 
 const AUTO_SAVE_ALARM = 'auto-save-snapshot';
@@ -24,15 +25,34 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
   }
   
   if (message.type === 'SET_AUTH') {
-    chrome.storage.local.set({ session: message.session }, () => {
-      sendResponse({ success: true });
+    if (!message.session) {
+      sendResponse({ success: false, error: 'No session provided' });
+      return true;
+    }
+
+    // Set session in Supabase client - this will handle persistence via the storage adapter
+    supabase.auth.setSession({
+      access_token: message.session.access_token,
+      refresh_token: message.session.refresh_token
+    }).then(({ data, error }) => {
+      if (error) {
+        console.error('Error setting session in extension:', error);
+        sendResponse({ success: false, error: error.message });
+      } else {
+        // Also keep the legacy 'session' key for now to avoid breaking UI that hasn't migrated
+        chrome.storage.local.set({ session: message.session }, () => {
+          sendResponse({ success: true });
+        });
+      }
     });
     return true; // Keep message channel open for async response
   }
   
   if (message.type === 'CLEAR_AUTH') {
-    chrome.storage.local.remove(['session'], () => {
-      sendResponse({ success: true });
+    supabase.auth.signOut().then(() => {
+      chrome.storage.local.remove(['session'], () => {
+        sendResponse({ success: true });
+      });
     });
     return true;
   }

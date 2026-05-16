@@ -9,13 +9,8 @@ export const syncService = {
    * Pushes a local workspace to Supabase cloud.
    */
   async pushWorkspace(workspace: Workspace): Promise<Workspace> {
-    const { session } = await chrome.storage.local.get(['session']);
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
-
-    await supabase.auth.setSession({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token
-    });
 
     const cloudData = {
       id: workspace.id,
@@ -47,13 +42,8 @@ export const syncService = {
    * Generates a public share link for a workspace.
    */
   async generateShareLink(workspace: Workspace): Promise<{ shareId: string; url: string }> {
-    const { session } = await chrome.storage.local.get(['session']);
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
-
-    await supabase.auth.setSession({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token
-    });
 
     const shareId = workspace.shareId || nanoid(6);
     
@@ -78,13 +68,8 @@ export const syncService = {
    * Revokes a public share link.
    */
   async revokeShareLink(workspace: Workspace): Promise<void> {
-    const { session } = await chrome.storage.local.get(['session']);
+    const { data: { session } } = await supabase.auth.getSession();
     if (!session) throw new Error('Not authenticated');
-
-    await supabase.auth.setSession({
-      access_token: session.access_token,
-      refresh_token: session.refresh_token
-    });
 
     const { error } = await supabase
       .from('workspaces')

@@ -37,23 +37,31 @@ const Popup: React.FC = () => {
   ////////////////////////////////////////// EFFECTS //////////////////////////////////////////
   useEffect(() => {
     loadWorkspaces();
-    loadSession();
     updateCurrentTabUrls();
+    
+    // Initialize session from Supabase
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+    });
+
+    // Listen for auth state changes (works for both local and background updates)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      if (session) {
+        // Also keep the legacy key in sync for services that still use it
+        chrome.storage.local.set({ session });
+      } else {
+        chrome.storage.local.remove(['session']);
+      }
+    });
+
     const timer = setInterval(() => {
       setCurrentTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     }, 10000);
 
-    // Listen for storage changes (for session relay from background)
-    const storageListener = (changes: any) => {
-      if (changes.session) {
-        setSession(changes.session.newValue);
-      }
-    };
-    chrome.storage.onChanged.addListener(storageListener);
-
     return () => {
       clearInterval(timer);
-      chrome.storage.onChanged.removeListener(storageListener);
+      subscription.unsubscribe();
     };
   }, []);
 
@@ -78,16 +86,9 @@ const Popup: React.FC = () => {
     });
   };
 
-  const loadSession = () => {
-    chrome.storage.local.get(['session'], (result) => {
-      if (result.session) {
-        setSession(result.session);
-      }
-    });
-  };
 
   const handleConnectCloud = () => {
-    chrome.tabs.create({ url: 'http://localhost:3000/sign-in' });
+    chrome.tabs.create({ url: 'http://localhost:3000/sign-in?extension=true' });
   };
 
   const handleShare = async (ws: Workspace) => {

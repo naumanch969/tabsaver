@@ -124,11 +124,25 @@ button {
 
 /* Workspace List Card */
 .workspace-list {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line2) transparent;
 }
+
 .workspace-list::-webkit-scrollbar {
-  display: none;
+  width: 5px;
+}
+
+.workspace-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.workspace-list::-webkit-scrollbar-thumb {
+  background: var(--line2);
+  border-radius: 10px;
+}
+
+.workspace-list::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-dim);
 }
 
 .ws-card {
