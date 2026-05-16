@@ -26,6 +26,7 @@ const Popup: React.FC = () => {
   
   const [searchQuery, setSearchQuery] = useState('');
   const [session, setSession] = useState<any>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [currentTabUrls, setCurrentTabUrls] = useState<Set<string>>(new Set());
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -36,20 +37,32 @@ const Popup: React.FC = () => {
 
   ////////////////////////////////////////// EFFECTS //////////////////////////////////////////
   useEffect(() => {
-    loadWorkspaces();
-    updateCurrentTabUrls();
-    
-    // Initialize session from Supabase
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    const initialize = async () => {
+      const localWorkspaces = await loadWorkspaces();
+      updateCurrentTabUrls();
+      
+      // Initialize session from Supabase
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      setSession(currentSession);
+      
+      if (currentSession) {
+        chrome.storage.local.set({ session: currentSession });
+        // Initial sync on mount if session exists
+        handleSyncAll(localWorkspaces);
+      }
+    };
 
-    // Listen for auth state changes (works for both local and background updates)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    initialize();
+
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       if (session) {
-        // Also keep the legacy key in sync for services that still use it
         chrome.storage.local.set({ session });
+        // If we just signed in, trigger a sync
+        if (event === 'SIGNED_IN') {
+          handleSyncAll();
+        }
       } else {
         chrome.storage.local.remove(['session']);
       }
@@ -78,14 +91,67 @@ const Popup: React.FC = () => {
   ////////////////////////////////////////// FUNCTIONS //////////////////////////////////////////
   
   // -- Data Fetching & Sync --
-  const loadWorkspaces = () => {
-    chrome.storage.local.get(['workspaces'], (result) => {
-      if (result.workspaces) {
-        setWorkspaces(result.workspaces);
-      }
+  const loadWorkspaces = (): Promise<Workspace[]> => {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(['workspaces'], (result) => {
+        let migrated: Workspace[] = [];
+        if (result.workspaces && Array.isArray(result.workspaces)) {
+          let needsUpdate = false;
+          migrated = result.workspaces.map((ws: Workspace) => {
+            // Migration: Ensure valid UUID for syncing with Supabase
+            const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+            if (!ws.id || !uuidRegex.test(ws.id)) {
+              needsUpdate = true;
+              return { ...ws, id: crypto.randomUUID() };
+            }
+            return ws;
+          });
+
+          if (needsUpdate) {
+            chrome.storage.local.set({ workspaces: migrated });
+          }
+        } else if (result.workspaces) {
+          console.error('Workspaces in storage is not an array:', result.workspaces);
+          chrome.storage.local.set({ workspaces: [] });
+        }
+        
+        setWorkspaces(migrated);
+        resolve(migrated);
+      });
     });
   };
 
+
+  const handleSyncAll = async (workspacesToSync?: Workspace[] | any) => {
+    // Re-check session
+    const { data: { session: currentSession } } = await supabase.auth.getSession();
+    if (!currentSession || isSyncing) {
+      if (!currentSession) console.log('Sync skipped: No session');
+      return;
+    }
+
+    // Determine what to sync. If explicitly passed as array, use it as local source.
+    // Otherwise use current workspaces state.
+    const localData = Array.isArray(workspacesToSync) ? workspacesToSync : workspaces;
+    
+    setIsSyncing(true);
+    try {
+      console.log('Starting bidirectional sync. Local count:', localData.length);
+      const syncedWorkspaces = await syncService.fullSync(localData);
+      
+      // Update local storage and state with merged results
+      chrome.storage.local.set({ workspaces: syncedWorkspaces }, () => {
+        setWorkspaces(syncedWorkspaces);
+        showToast('Cloud sync complete');
+      });
+      console.log('Full sync completed successfully. Final count:', syncedWorkspaces.length);
+    } catch (error: any) {
+      console.error('Failed to sync workspaces:', error);
+      showToast(`Sync failed: ${error.message || 'Unknown error'}`);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const handleConnectCloud = () => {
     chrome.tabs.create({ url: 'http://localhost:3000/sign-in?extension=true' });
@@ -169,6 +235,7 @@ const Popup: React.FC = () => {
         const updated = [newWs, ...current];
         chrome.storage.local.set({ workspaces: updated }, () => {
           setWorkspaces(updated);
+          if (session) handleSyncAll(updated);
         });
       });
     });
@@ -194,6 +261,8 @@ const Popup: React.FC = () => {
     chrome.storage.local.set({ workspaces: updated }, () => {
       setWorkspaces(updated);
       setView('list');
+
+      if (session) handleSyncAll(updated);
 
       if (closeTabs) {
         const tabIdsToClose = filteredTabs.map(t => t.id).filter((id): id is number => id !== undefined);
@@ -234,6 +303,7 @@ const Popup: React.FC = () => {
       if (selectedWorkspace?.id === id) {
         setSelectedWorkspace({ ...selectedWorkspace, name: nameToUse.trim() });
       }
+      if (session) handleSyncAll(updated);
     });
   };
 
@@ -244,14 +314,22 @@ const Popup: React.FC = () => {
     }, 3000);
   };
 
-  const deleteWorkspace = (id: string) => {
+  const deleteWorkspace = async (id: string) => {
     if (confirm('Delete this session? This action cannot be undone.')) {
       const updated = workspaces.filter(ws => ws.id !== id);
-      chrome.storage.local.set({ workspaces: updated }, () => {
+      chrome.storage.local.set({ workspaces: updated }, async () => {
         setWorkspaces(updated);
         setSelectedWorkspace(null);
         setView('list');
         showToast('Session deleted safely');
+        
+        if (session) {
+          try {
+            await syncService.deleteWorkspaceCloud(id);
+          } catch (err) {
+            console.error('Cloud deletion failed:', err);
+          }
+        }
       });
     }
   };
@@ -273,6 +351,7 @@ const Popup: React.FC = () => {
         const ws = updated.find(w => w.id === workspaceId);
         if (ws) setSelectedWorkspace(ws);
       }
+      if (session) handleSyncAll(updated);
     });
   };
 
@@ -301,6 +380,8 @@ const Popup: React.FC = () => {
           onRenameCancel={() => setEditingId(null)}
           onConnectCloud={handleConnectCloud}
           onDeleteWorkspace={deleteWorkspace}
+          onSyncAll={handleSyncAll}
+          isSyncing={isSyncing}
           session={session}
         />
       )}

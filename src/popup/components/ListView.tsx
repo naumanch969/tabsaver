@@ -1,7 +1,7 @@
 import React from 'react';
 import { Workspace } from '../../types';
 import WorkspaceCard from './WorkspaceCard';
-import { Layers } from 'lucide-react';
+import { Layers, RefreshCcw } from 'lucide-react';
 
 interface ListViewProps {
   workspaces: Workspace[];
@@ -22,9 +22,11 @@ interface ListViewProps {
   onRenameSave: (id: string) => void;
   onRenameCancel: () => void;
   onConnectCloud: () => void;
+  onSyncAll: () => void;
   onDeleteWorkspace: (id: string) => void;
   searchRef: React.RefObject<HTMLInputElement>;
   session: any;
+  isSyncing?: boolean;
 }
 
 const ListView: React.FC<ListViewProps> = ({
@@ -46,9 +48,11 @@ const ListView: React.FC<ListViewProps> = ({
   onRenameSave,
   onRenameCancel,
   onConnectCloud,
+  onSyncAll,
   onDeleteWorkspace,
   searchRef,
-  session
+  session,
+  isSyncing = false
 }) => {
   const filteredWorkspaces = workspaces.filter(ws => {
     const query = searchQuery.toLowerCase();
@@ -78,6 +82,24 @@ const ListView: React.FC<ListViewProps> = ({
               title={`Restore: ${workspaces[0].name}`}
             >
               Resume Last
+            </button>
+          )}
+          {session && (
+            <button
+              onClick={() => onSyncAll()}
+              disabled={isSyncing}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: 'var(--t3)', 
+                cursor: isSyncing ? 'default' : 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                padding: '4px'
+              }}
+              title="Sync to Cloud"
+            >
+              <RefreshCcw size={16} className={isSyncing ? 'animate-spin' : ''} style={{ opacity: isSyncing ? 0.5 : 1 }} />
             </button>
           )}
           {session ? (
