@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "TabStratum",
+  "name": "TabStack",
   "description": "Professional workspace architecture with Industrial Authority aesthetics and cloud vault protection.",
   "version": "1.1.2",
   "action": {
@@ -25,7 +25,7 @@
     "alarms"
   ],
   "externally_connectable": {
-    "matches": ["http://localhost:3000/*", "https://*.tabstratum.app/*"]
+    "matches": ["http://localhost:3000/*", "https://*.tabstack.app/*"]
   },
   "background": {
     "service_worker": "background.js",
@@ -37,7 +37,7 @@
         "default": "Alt+F",
         "mac": "Alt+F"
       },
-      "description": "Open TabStratum"
+      "description": "Open TabStack"
     }
   }
 }

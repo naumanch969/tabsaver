@@ -28,6 +28,7 @@ const Popup: React.FC = () => {
   const [session, setSession] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
   const [currentTabUrls, setCurrentTabUrls] = useState<Set<string>>(new Set());
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // Inline editing state (List view)
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -235,13 +236,23 @@ const Popup: React.FC = () => {
     });
   };
 
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setTimeout(() => {
+      setToastMessage(null);
+    }, 3000);
+  };
+
   const deleteWorkspace = (id: string) => {
-    const updated = workspaces.filter(ws => ws.id !== id);
-    chrome.storage.local.set({ workspaces: updated }, () => {
-      setWorkspaces(updated);
-      setSelectedWorkspace(null);
-      setView('list');
-    });
+    if (confirm('Delete this session? This action cannot be undone.')) {
+      const updated = workspaces.filter(ws => ws.id !== id);
+      chrome.storage.local.set({ workspaces: updated }, () => {
+        setWorkspaces(updated);
+        setSelectedWorkspace(null);
+        setView('list');
+        showToast('Session deleted safely');
+      });
+    }
   };
 
   const deleteTab = (workspaceId: string, tabIndex: number) => {
@@ -288,6 +299,7 @@ const Popup: React.FC = () => {
           onRenameSave={(id) => handleRenameInline(id)}
           onRenameCancel={() => setEditingId(null)}
           onConnectCloud={handleConnectCloud}
+          onDeleteWorkspace={deleteWorkspace}
           session={session}
         />
       )}
@@ -337,6 +349,10 @@ const Popup: React.FC = () => {
           <span className="status-label">{view === 'list' ? 'System Active' : 'Vault Ready'}</span>
         </div>
         <span className="status-time">{currentTime}</span>
+      </div>
+
+      <div className={`toast-notification ${toastMessage ? 'show' : ''}`}>
+        {toastMessage}
       </div>
     </div>
   );

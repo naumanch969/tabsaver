@@ -1,6 +1,6 @@
 {
-  "name": "tab-stratum-extension",
-  "displayName": "TabStratum",
+  "name": "tab-stack-extension",
+  "displayName": "TabStack",
   "version": "1.1.2",
   "description": "Professional workspace architecture for browser sessions.",
   "author": "Nauman Chaudhry",

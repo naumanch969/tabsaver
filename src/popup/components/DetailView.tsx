@@ -124,11 +124,7 @@ const DetailView: React.FC<DetailViewProps> = ({
         <button 
           className="btn-secondary" 
           style={{ flex: 1, borderColor: '#e07070', color: '#e07070' }}
-          onClick={() => {
-            if (confirm('Delete this workspace? This cannot be undone.')) {
-              onDeleteWorkspace(selectedWorkspace.id);
-            }
-          }}
+          onClick={() => onDeleteWorkspace(selectedWorkspace.id)}
         >
           Delete Vault
         </button>

@@ -52,6 +52,33 @@ button {
   border: 1px solid var(--line2);
   position: relative;
   box-shadow: 0 32px 80px rgba(0, 0, 0, 0.6);
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Toast */
+.toast-notification {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg2);
+  border: 1px solid var(--line2);
+  color: var(--t1);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+  white-space: nowrap;
+}
+
+.toast-notification.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
 }
 
 .serif { font-family: 'Fraunces', serif; }
@@ -96,12 +123,21 @@ button {
 }
 
 /* Workspace List Card */
+.workspace-list {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.workspace-list::-webkit-scrollbar {
+  display: none;
+}
+
 .ws-card {
   padding: 16px;
   background: var(--bg2);
   border: 1px solid var(--line2);
   border-radius: 14px;
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 16px;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -182,12 +218,12 @@ button {
 
 .ws-actions { 
   display: flex; 
-  flex-direction: column;
+  flex-direction: row;
   gap: 6px;
-  align-items: stretch; 
+  align-items: center; 
+  justify-content: flex-end;
   opacity: 0.6;
   transition: all 0.2s; 
-  width: 100px;
 }
 
 .ws-card:hover .ws-actions { 

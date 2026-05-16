@@ -18,6 +18,11 @@ chrome.runtime.onStartup.addListener(() => {
 chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
   console.log('Received message from external source:', sender.url, message);
   
+  if (message.type === 'PING') {
+    sendResponse({ success: true, version: chrome.runtime.getManifest().version });
+    return true;
+  }
+  
   if (message.type === 'SET_AUTH') {
     chrome.storage.local.set({ session: message.session }, () => {
       sendResponse({ success: true });
@@ -45,25 +50,15 @@ chrome.tabs.onRemoved.addListener(updateBadge);
 
 async function setupAlarms() {
   await chrome.alarms.clearAll();
-  chrome.alarms.create(AUTO_SAVE_ALARM, {
-    periodInMinutes: AUTO_SAVE_INTERVAL,
-  });
+  // Disabled auto-save alarm as requested
+  // chrome.alarms.create(AUTO_SAVE_ALARM, {
+  //   periodInMinutes: AUTO_SAVE_INTERVAL,
+  // });
 }
 
 async function performAutoSave() {
-  const tabs = await tabService.getCurrentTabs();
-  if (tabs.length === 0) return;
-
-  const autoWorkspace: Workspace = {
-    id: 'auto-save-' + Date.now(),
-    name: 'Auto-Save Snapshot',
-    tabs,
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-    isAutoSave: true,
-  };
-
-  await storageService.saveWorkspace(autoWorkspace);
+  // Disabled auto-save feature
+  return;
 }
 
 async function updateBadge() {

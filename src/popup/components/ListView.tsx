@@ -21,6 +21,7 @@ interface ListViewProps {
   onRenameSave: (id: string) => void;
   onRenameCancel: () => void;
   onConnectCloud: () => void;
+  onDeleteWorkspace: (id: string) => void;
   searchRef: React.RefObject<HTMLInputElement>;
   session: any;
 }
@@ -44,6 +45,7 @@ const ListView: React.FC<ListViewProps> = ({
   onRenameSave,
   onRenameCancel,
   onConnectCloud,
+  onDeleteWorkspace,
   searchRef,
   session
 }) => {
@@ -72,18 +74,45 @@ const ListView: React.FC<ListViewProps> = ({
           <div className="logo-name">
             <span className="wm-tab">Tab</span>
             <span className="wm-dot"></span>
-            <span className="wm-saver">Stratum</span>
+            <span className="wm-saver">Stack</span>
           </div>
         </div>
-        {workspaces.length > 0 && (
-          <button
-            className="resume-btn-header"
-            onClick={() => onDirectRestore(workspaces[0])}
-            title={`Restore: ${workspaces[0].name}`}
-          >
-            Resume Last
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {workspaces.length > 0 && (
+            <button
+              className="resume-btn-header"
+              onClick={() => onDirectRestore(workspaces[0])}
+              title={`Restore: ${workspaces[0].name}`}
+            >
+              Resume Last
+            </button>
+          )}
+          {session ? (
+            session.user?.user_metadata?.avatar_url ? (
+              <img 
+                src={session.user.user_metadata.avatar_url} 
+                alt="Profile" 
+                onClick={onConnectCloud}
+                style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid var(--line2)', objectFit: 'cover', cursor: 'pointer' }} 
+              />
+            ) : (
+              <div 
+                onClick={onConnectCloud}
+                style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'var(--accent)', color: 'var(--bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+                title={session.user?.email}
+              >
+                {session.user?.email?.[0].toUpperCase() || 'U'}
+              </div>
+            )
+          ) : (
+            <button 
+              onClick={onConnectCloud}
+              style={{ padding: '6px 12px', borderRadius: '6px', background: 'var(--bg3)', border: '1px solid var(--line)', fontSize: '12px', fontWeight: '500', color: 'var(--t1)', cursor: 'pointer', fontFamily: 'inherit' }}
+            >
+              Connect
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="search-container" style={{ margin: '14px 14px 0' }}>
@@ -113,7 +142,7 @@ const ListView: React.FC<ListViewProps> = ({
           <div className="action-icon" style={{ flexShrink: 0, width: '28px', height: '28px', fontSize: '14px' }}>＋</div>
           <div className="ws-info">
             <div className="ws-name" style={{ fontSize: '13px' }}>Save All</div>
-            <div className="ws-meta" style={{ marginTop: '0' }}><span className="caption">Whole window</span></div>
+            <div className="ws-meta" style={{ marginTop: '0' }}><span className="caption">Save window</span></div>
           </div>
         </button>
         
@@ -124,38 +153,38 @@ const ListView: React.FC<ListViewProps> = ({
         >
           <div className="action-icon" style={{ flexShrink: 0, width: '28px', height: '28px', fontSize: '14px' }}>🗂️</div>
           <div className="ws-info">
-            <div className="ws-name" style={{ fontSize: '13px' }}>Current Tab</div>
+            <div className="ws-name" style={{ fontSize: '13px' }}>Save Tab</div>
             <div className="ws-meta" style={{ marginTop: '0' }}><span className="caption">Quick save</span></div>
           </div>
         </button>
       </div>
 
-      <div className="section-header" style={{ padding: '18px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div className="section-title">Saved Vaults</div>
+      <div className="section-header" style={{ padding: '18px 18px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
+        <div className="section-title">Saved Tabs</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {!session ? (
             <button 
               onClick={onConnectCloud}
-              style={{ padding: '4px 8px', borderRadius: '4px', background: 'var(--bg3)', border: '1px border var(--br1)', fontSize: '10px font-bold color #e8a84b cursor pointer' }}
+              style={{ padding: '4px 8px', borderRadius: '4px', background: 'var(--bg3)', border: '1px solid var(--line)', fontSize: '10px', fontWeight: 'bold', color: '#e8a84b', cursor: 'pointer' }}
             >
               ☁️ Connect
             </button>
           ) : (
             <div className="caption" style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
               <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4ade80' }}></div>
-              Cloud Synced
+              Synced
             </div>
           )}
           <div className="caption">{workspaces.length} total</div>
         </div>
       </div>
 
-      <div className="workspace-list" style={{ padding: '0 14px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="workspace-list" style={{ padding: '0 14px 14px', flex: 1, overflowY: 'auto', minHeight: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {workspaces.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--t3)' }}>
             <div style={{ fontSize: '32px', marginBottom: '12px', opacity: 0.3 }}>🏛️</div>
-            <p style={{ fontSize: '13px' }}>Your vault is empty</p>
-            <p className="caption" style={{ marginTop: '4px' }}>Sessions you save will appear here.</p>
+            <p style={{ fontSize: '13px' }}>Your Vault is empty</p>
+            <p className="caption" style={{ marginTop: '4px' }}>Tabs you save will appear here.</p>
           </div>
         ) : (
           filteredWorkspaces.length === 0 ? (
@@ -178,6 +207,7 @@ const ListView: React.FC<ListViewProps> = ({
                   onRenameChange={onRenameChange}
                   onRenameSave={() => onRenameSave(ws.id)}
                   onRenameCancel={onRenameCancel}
+                  onDelete={(e) => { e.stopPropagation(); onDeleteWorkspace(ws.id); }}
                 />
               ))
           )

@@ -2,19 +2,24 @@ import { supabase } from './supabase';
 import { Workspace } from '../types';
 import { nanoid } from 'nanoid';
 
-const CLIENT_URL = 'https://tabstratum.app';
+const CLIENT_URL = 'https://tabstack.app';
 
 export const syncService = {
   /**
    * Pushes a local workspace to Supabase cloud.
    */
   async pushWorkspace(workspace: Workspace): Promise<Workspace> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    const { session } = await chrome.storage.local.get(['session']);
+    if (!session) throw new Error('Not authenticated');
+
+    await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token
+    });
 
     const cloudData = {
       id: workspace.id,
-      user_id: user.id,
+      user_id: session.user.id,
       name: workspace.name,
       data: workspace.tabs, // Map tabs to the 'data' field in schema
       color: workspace.color,
@@ -33,7 +38,7 @@ export const syncService = {
 
     return {
       ...workspace,
-      user_id: user.id,
+      user_id: session.user.id,
       syncedAt: Date.now(),
     };
   },
@@ -42,8 +47,13 @@ export const syncService = {
    * Generates a public share link for a workspace.
    */
   async generateShareLink(workspace: Workspace): Promise<{ shareId: string; url: string }> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    const { session } = await chrome.storage.local.get(['session']);
+    if (!session) throw new Error('Not authenticated');
+
+    await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token
+    });
 
     const shareId = workspace.shareId || nanoid(6);
     
@@ -53,7 +63,7 @@ export const syncService = {
         is_public: true, 
         share_id: shareId 
       })
-      .eq('user_id', user.id)
+      .eq('user_id', session.user.id)
       .eq('name', workspace.name); // Assuming name is a decent secondary check if we don't have UUID yet
 
     if (error) throw error;
@@ -68,8 +78,13 @@ export const syncService = {
    * Revokes a public share link.
    */
   async revokeShareLink(workspace: Workspace): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    const { session } = await chrome.storage.local.get(['session']);
+    if (!session) throw new Error('Not authenticated');
+
+    await supabase.auth.setSession({
+      access_token: session.access_token,
+      refresh_token: session.refresh_token
+    });
 
     const { error } = await supabase
       .from('workspaces')
@@ -77,7 +92,7 @@ export const syncService = {
         is_public: false, 
         share_id: null 
       })
-      .eq('user_id', user.id)
+      .eq('user_id', session.user.id)
       .eq('name', workspace.name);
 
     if (error) throw error;

@@ -1,4 +1,4 @@
-# TabStratum
+# TabStack
 
 A very simple way to clear your head by clearing your tabs. 
 

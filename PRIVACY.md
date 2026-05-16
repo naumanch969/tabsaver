@@ -1,14 +1,14 @@
-# Privacy Policy for TabStratum
+# Privacy Policy for TabStack
 
 **Last Updated: April 26, 2026**
 
-TabStratum ("the Extension") is committed to protecting your privacy. This Privacy Policy explains how we handle your data.
+TabStack ("the Extension") is committed to protecting your privacy. This Privacy Policy explains how we handle your data.
 
 ## 1. Single Purpose
 The Extension is a professional browser workspace manager designed to help users capture, organize, and restore browser sessions.
 
 ## 2. Data Collection and Usage
-TabStratum values your privacy. **By default, all your data remains local on your device.**
+TabStack values your privacy. **By default, all your data remains local on your device.**
 
 *   **Web History (Tabs & URLs)**: To function, the Extension captures the URLs and titles of your currently open tabs. This data is used solely to create session snapshots ("Vaults") so you can restore them later.
 *   **Local Storage**: Captured data is stored on your local device using the `chrome.storage` API. 
